@@ -1,1 +1,876 @@
-
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#f5f8fc" id="themeColor">
+  <meta name="description" content="VittaCare — Tecnologia e cuidado em cada atendimento.">
+  <link rel="icon" type="image/png" href="vittacare-symbol.png">
+  <title>VittaCare — Tecnologia e cuidado em cada atendimento</title>
+  <style>
+    :root {
+      color-scheme: light;
+      --ink: #172b4d;
+      --muted: #77849a;
+      --line: #e8edf4;
+      --blue: #0754ad;
+      --blue-light: #eaf8f8;
+      --green: #168a70;
+      --bg: #f5f8fc;
+      --white: #fff;
+      --surface-soft: #fafbfd;
+      --input-bg: #fff;
+      --shadow: 0 8px 26px rgba(31, 52, 91, .06);
+      --line-soft: #eff2f6;
+      --muted-strong: #6e7b91;
+    }
+    :root[data-theme="dark"] {
+      color-scheme: dark;
+      --ink: #e6edf8;
+      --muted: #9aa9bd;
+      --line: #29374b;
+      --blue: #8da2ff;
+      --blue-light: #202d49;
+      --green: #53c8a9;
+      --bg: #111a28;
+      --white: #192536;
+      --surface-soft: #1d2a3c;
+      --input-bg: #152235;
+      --shadow: 0 10px 30px rgba(0, 0, 0, .18);
+      --line-soft: #29374b;
+      --muted-strong: #aab7c9;
+    }
+    :root[data-theme="dark"] .btn-primary { background: #526ee8; border-color: #526ee8; color: #fff; }
+    :root[data-theme="dark"] .status { background: #173c35; color: #73d7b4; }
+    :root[data-theme="dark"] .status.pending { background: #44351e; color: #f1c66f; }
+    :root[data-theme="dark"] .status.cancelled { background: #48292d; color: #ff9a9a; }
+    :root[data-theme="dark"] .nav button { color: var(--muted); }
+    * { box-sizing: border-box; }
+    body { margin: 0; background: radial-gradient(ellipse at 85% 0%, color-mix(in srgb, var(--blue-light) 48%, transparent), transparent 36%), var(--bg); color: var(--ink); font: 14px/1.5 Inter, ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif; transition: background .2s, color .2s; }
+    button, input, select, textarea { font: inherit; }
+    button { cursor: pointer; }
+    .app { min-height: 100vh; }
+    .sidebar { width: 250px; position: fixed; inset: 0 auto 0 0; background: var(--white); border-right: 1px solid var(--line); padding: 24px 15px; display: flex; flex-direction: column; z-index: 5; }
+    .brand { display: flex; align-items: center; gap: 11px; padding: 0 10px 28px; font-size: 18px; font-weight: 750; letter-spacing: -.5px; }
+    .brand-mark { width: 36px; height: 36px; border-radius: 12px; background: var(--blue); color: white; display: grid; place-items: center; font-size: 21px; }
+    .brand-logo-symbol { display: block; width: 38px; height: 38px; flex: 0 0 38px; border-radius: 10px; object-fit: cover; background: white; }
+    .brand-copy { display: grid; min-width: 0; line-height: 1.25; }
+    .brand-copy strong { font-size: 16px; letter-spacing: .1px; }
+    .brand-copy small { margin-top: 3px; color: var(--muted); font-size: 9px; font-weight: 500; line-height: 1.35; letter-spacing: 0; }
+    .nav-label { color: #9aa5b5; font-size: 10px; letter-spacing: 1.3px; font-weight: 700; padding: 16px 12px 8px; }
+    .nav { display: grid; gap: 4px; overflow-y: auto; }
+    .nav button { border: 0; border-radius: 9px; padding: 10px 12px; color: #6d7b91; text-align: left; background: transparent; display: flex; gap: 12px; align-items: center; font-weight: 550; }
+    .nav button:hover, .nav button.active { color: var(--blue); background: var(--blue-light); }
+    .nav-icon { width: 20px; text-align: center; font-size: 16px; }
+    .sidebar-bottom { margin-top: auto; }
+    .profile { display: flex; align-items: center; gap: 10px; padding: 13px 8px 4px; border-top: 1px solid var(--line); }
+    .avatar { width: 36px; height: 36px; flex: 0 0 36px; display: grid; place-items: center; border-radius: 50%; background: #e5edff; color: #4059b8; font-weight: 700; }
+    .profile small, .profile strong { display: block; }
+    .profile small { color: var(--muted); font-size: 11px; }
+    .main { margin-left: 250px; min-height: 100vh; }
+    .topbar { position: sticky; top: 0; z-index: 3; background: color-mix(in srgb, var(--white) 92%, transparent); backdrop-filter: blur(8px); border-bottom: 1px solid var(--line); min-height: 70px; padding: 0 34px; display: flex; justify-content: space-between; align-items: center; }
+    .crumb { color: var(--muted); font-size: 13px; }
+    .top-actions { display: flex; align-items: center; gap: 12px; }
+    .date-label { color: var(--muted); font-size: 12px; }
+    .content { max-width: 1400px; padding: 30px 34px 60px; margin: auto; }
+    .page-heading { display: flex; justify-content: space-between; align-items: center; gap: 15px; margin-bottom: 24px; }
+    h1 { font-size: 25px; letter-spacing: -.7px; margin: 0 0 4px; }
+    h2 { font-size: 16px; margin: 0; }
+    h3 { font-size: 14px; margin: 0; }
+    .subtitle { color: var(--muted); margin: 0; }
+    .btn { border: 1px solid var(--line); background: var(--white); color: var(--ink); border-radius: 9px; padding: 9px 13px; font-weight: 600; display: inline-flex; align-items: center; justify-content: center; gap: 7px; transition: transform .16s, box-shadow .16s, border-color .16s; }
+    .btn:hover { transform: translateY(-1px); box-shadow: var(--shadow); }
+    .btn:hover { border-color: #c4cee0; }
+    .btn-primary { background: var(--blue); color: white; border-color: var(--blue); }
+    .btn-primary:hover { background: #3554d4; }
+    .btn-sm { padding: 6px 10px; font-size: 12px; }
+    .cards { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 16px; margin-bottom: 22px; }
+    .card, .panel { border: 1px solid var(--line); border-radius: 16px; background: var(--white); box-shadow: var(--shadow); }
+    .card { transition: transform .18s, box-shadow .18s; }
+    .card:hover { transform: translateY(-2px); box-shadow: 0 14px 34px rgba(31, 52, 91, .1); }
+    .metric { padding: 18px; }
+    .metric-top { color: var(--muted); display: flex; justify-content: space-between; align-items: center; font-size: 12px; }
+    .metric-icon { width: 32px; height: 32px; display: grid; place-items: center; border-radius: 9px; background: var(--blue-light); color: var(--blue); font-size: 16px; }
+    .metric-value { font-size: 26px; line-height: 1.2; font-weight: 750; margin: 11px 0 4px; letter-spacing: -.6px; }
+    .metric-note { font-size: 11px; color: var(--muted); }
+    .dashboard-grid { display: grid; grid-template-columns: minmax(0, 1.5fr) minmax(290px, .9fr); gap: 18px; }
+    .panel { padding: 20px; margin-bottom: 18px; }
+    .panel-head { display: flex; justify-content: space-between; align-items: center; gap: 10px; margin-bottom: 16px; }
+    .appointment { display: grid; grid-template-columns: 58px 1fr auto; gap: 12px; align-items: center; padding: 12px 0; border-top: 1px solid var(--line-soft); }
+    .appointment:first-child { border-top: 0; }
+    .time { font-weight: 700; color: var(--blue); }
+    .person { font-weight: 650; }
+    .detail { color: var(--muted); font-size: 12px; }
+    .status { padding: 4px 8px; border-radius: 20px; font-size: 10px; font-weight: 700; white-space: nowrap; background: #eaf8f2; color: #168461; }
+    .status.pending { background: #fff6e5; color: #a36b0b; }
+    .status.cancelled { background: #fff0f0; color: #bd4a4a; }
+    .quick-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+    .quick { text-align: left; min-height: 75px; padding: 13px; border: 1px solid var(--line); background: var(--white); border-radius: 12px; color: var(--ink); transition: .18s; }
+    .quick:hover { border-color: var(--blue); background: var(--blue-light); transform: translateY(-2px); }
+    .quick span { display: block; font-size: 18px; margin-bottom: 5px; }
+    .quick strong { font-size: 12px; }
+    .table-wrap { overflow-x: auto; }
+    table { width: 100%; border-collapse: collapse; text-align: left; white-space: nowrap; }
+    th { font-size: 10px; color: var(--muted); text-transform: uppercase; letter-spacing: .7px; font-weight: 700; padding: 11px 12px; background: var(--surface-soft); }
+    td { padding: 13px 12px; border-top: 1px solid var(--line-soft); font-size: 12px; }
+    .toolbar { display: flex; align-items: center; gap: 10px; margin-bottom: 16px; }
+    .search { position: relative; flex: 1; max-width: 380px; }
+    .search input { width: 100%; padding: 10px 12px 10px 36px; }
+    .search:before { content: "⌕"; position: absolute; left: 12px; top: 6px; color: #8994a5; font-size: 20px; }
+    input, select, textarea { color: var(--ink); border: 1px solid var(--line); border-radius: 8px; padding: 9px 10px; background: var(--input-bg); outline: none; }
+    input:focus, select:focus, textarea:focus { border-color: #8da2ff; box-shadow: 0 0 0 3px #4263eb18; }
+    textarea { min-height: 82px; resize: vertical; }
+    .empty { padding: 30px; color: var(--muted); text-align: center; }
+    .page-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; }
+    .field-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+    .field { display: grid; gap: 5px; }
+    .field label { font-size: 11px; color: var(--muted-strong); font-weight: 650; }
+    .field.full { grid-column: 1 / -1; }
+    .form-actions { display: flex; gap: 8px; justify-content: flex-end; margin-top: 16px; }
+    .note { color: var(--muted-strong); font-size: 12px; }
+    .calendar-row { display: grid; grid-template-columns: 80px 1fr; border-top: 1px solid var(--line); padding: 14px 0; gap: 14px; }
+    .calendar-time { color: var(--blue); font-weight: 700; }
+    .calendar-row { grid-template-columns: 65px minmax(0, 1fr) auto; align-items: center; }
+    .row-actions { display: flex; gap: 6px; }
+    .banner { border-radius: 12px; background: var(--blue-light); color: var(--ink); padding: 12px 14px; font-size: 12px; margin-bottom: 17px; }
+    .toast { position: fixed; bottom: 22px; right: 22px; background: #172b4d; color: white; border-radius: 9px; padding: 12px 16px; box-shadow: var(--shadow); z-index: 20; }
+    .modal-backdrop { display: none; position: fixed; inset: 0; background: #16233c66; z-index: 10; padding: 20px; overflow: auto; align-items: center; justify-content: center; }
+    .modal-backdrop.open { display: flex; }
+    .modal { width: min(600px, 100%); max-height: 92vh; overflow: auto; background: var(--white); border-radius: 16px; padding: 22px; box-shadow: 0 20px 70px #172b4d33; }
+    .modal-head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 18px; }
+    .close { border: 0; background: transparent; color: var(--muted); font-size: 22px; }
+    .login-screen { position: fixed; inset: 0; z-index: 30; background: var(--bg); display: grid; place-items: center; padding: 20px; }
+    .login-card { width: min(390px, 100%); background: var(--white); padding: 30px; border: 1px solid var(--line); border-radius: 18px; box-shadow: var(--shadow); }
+    .login-card h1 { font-size: 22px; margin: 15px 0 5px; }
+    .login-card .field { margin-top: 18px; }
+    .login-card .btn { width: 100%; margin-top: 12px; }
+    .connection-settings { margin-top: 16px; padding: 12px; border: 1px solid var(--line); border-radius: 10px; background: var(--surface-soft); }
+    .connection-settings summary { cursor: pointer; font-weight: 650; font-size: 12px; }
+    .connection-settings .field { margin-top: 12px; }
+    .connection-settings .note { margin-bottom: 0; }
+    .error { color: #ba3c3c; font-size: 12px; min-height: 18px; }
+    .mobile-menu { display: none; }
+    .theme-toggle { width: 38px; height: 38px; padding: 0; font-size: 17px; }
+    .certificate-paper { background: #fff; color: #172b4d; padding: 38px; border: 1px solid #e2e8f0; border-radius: 8px; }
+    .certificate-paper h2 { text-align: center; margin: 20px 0 35px; }
+    .certificate-paper p { line-height: 1.9; }
+    .certificate-signature { margin: 65px auto 0; width: 260px; text-align: center; border-top: 1px solid #596579; padding-top: 8px; }
+    @media print {
+      body * { visibility: hidden !important; }
+      .certificate-paper, .certificate-paper * { visibility: visible !important; }
+      .modal-backdrop.open { display: block !important; position: static; padding: 0; background: #fff; }
+      .modal { width: 100%; max-height: none; overflow: visible; padding: 0; box-shadow: none; }
+      .certificate-paper { position: absolute; inset: 0; width: 100%; min-height: 100vh; border: 0; padding: 50px; }
+    }
+    @media (max-width: 1000px) { .cards { grid-template-columns: repeat(2, 1fr); } .content { padding: 24px; } .topbar { padding: 0 24px; } }
+    @media (max-width: 720px) {
+      .sidebar { width: 250px; transform: translateX(-101%); transition: transform .2s; box-shadow: var(--shadow); }
+      .sidebar.open { transform: translateX(0); }
+      .main { margin-left: 0; }
+      .mobile-menu { display: inline-flex; }
+      .topbar { padding: 0 15px; min-height: 60px; }
+      .date-label { display: none; }
+      .content { padding: 22px 15px 45px; }
+      .cards { gap: 10px; }
+      .metric { padding: 13px; }
+      .metric-value { font-size: 22px; }
+      .dashboard-grid, .page-grid { grid-template-columns: 1fr; gap: 0; }
+      .page-heading { align-items: flex-start; }
+      .toolbar { flex-wrap: wrap; }
+      .toolbar .search { max-width: none; flex-basis: 100%; }
+      .appointment { grid-template-columns: 48px 1fr; }
+      .appointment .status { grid-column: 2; justify-self: start; }
+      .calendar-row { grid-template-columns: 52px minmax(0, 1fr); }
+      .calendar-row .row-actions { grid-column: 2; }
+    }
+    @media (max-width: 420px) { .cards { grid-template-columns: 1fr 1fr; } .metric-note { font-size: 10px; } .field-grid { grid-template-columns: 1fr; } .field.full { grid-column: auto; } }
+    .sidebar { width: 216px; padding: 22px 13px 14px; background: #102b50; border: 0; color: #fff; }
+    .brand { padding: 0 10px 24px; color: #fff; font-size: 17px; }
+    .brand-mark { border-radius: 10px; background: #1d73da; box-shadow: 0 5px 16px #061d3880; }
+    .nav-label { color: #8ca5c0; padding-top: 14px; }
+    .nav button, :root[data-theme="dark"] .nav button { color: #bdcce0; padding: 9px 11px; font-size: 12px; }
+    .nav button:hover { color: #fff; background: #ffffff12; }
+    .nav button.active, .nav button.active:hover { color: #fff; background: #2478d4; box-shadow: inset 3px 0 #8dc4ff; }
+    .nav-icon { color: #b8cce4; }
+    .nav button.active .nav-icon { color: #fff; }
+    .sidebar .btn { width: 100%; margin-bottom: 12px; border-color: #ffffff2c; background: #ffffff0d; color: #eef5ff; }
+    .sidebar .profile { border-color: #ffffff24; }
+    .sidebar .profile small { color: #a7bdd5; }
+    .sidebar .avatar { background: #e4efff; color: #1d4d84; }
+    .sidebar .brand-copy small { color: #a7bdd5; max-width: 135px; }
+    .login-brand { display: flex; justify-content: center; padding: 0 0 7px !important; }
+    .login-brand-logo { display: block; width: min(245px, 78%); height: auto; border-radius: 8px; }
+    .login-tagline { margin: 0; color: var(--muted); font-size: 12px; text-align: center; }
+    .certificate-logo { display: block; width: 150px; height: auto; margin: 0 auto 8px; }
+    .main { margin-left: 216px; }
+    .topbar { min-height: 68px; padding: 0 30px; }
+    .top-actions { gap: 10px; }
+    .global-search { position: relative; width: min(360px, 36vw); }
+    .global-search input { width: 100%; height: 38px; padding: 8px 12px 8px 36px; background: var(--surface-soft); border-color: transparent; font-size: 12px; }
+    .global-search:before { content: "⌕"; position: absolute; z-index: 1; left: 12px; top: 4px; color: var(--muted); font-size: 20px; }
+    .global-search-results { display: none; position: absolute; top: calc(100% + 8px); left: 0; right: 0; max-height: 300px; overflow: auto; padding: 6px; background: var(--white); border: 1px solid var(--line); border-radius: 12px; box-shadow: var(--shadow); z-index: 8; }
+    .global-search-results.open { display: block; }
+    .global-search-results button { display: flex; width: 100%; gap: 10px; align-items: center; padding: 9px; border: 0; border-radius: 8px; background: transparent; color: var(--ink); text-align: left; }
+    .global-search-results button:hover, .global-search-results button:focus { background: var(--blue-light); }
+    .global-search-empty { padding: 10px; color: var(--muted); font-size: 12px; }
+    .content { max-width: 1500px; padding: 27px 30px 55px; }
+    .page-heading { margin-bottom: 20px; }
+    .page-heading h1 { font-size: 24px; }
+    .cards { gap: 13px; margin-bottom: 18px; }
+    .card, .panel { border-radius: 12px; }
+    .metric { padding: 16px; }
+    .metric-value { font-size: 25px; }
+    .dashboard-grid { grid-template-columns: minmax(0, 1.2fr) minmax(310px, .8fr); gap: 15px; align-items: start; }
+    .panel { padding: 17px; margin-bottom: 15px; }
+    .panel-head { margin-bottom: 13px; }
+    .panel-head h2 { font-size: 14px; }
+    .dashboard-patient-table th { background: transparent; padding: 8px 9px; }
+    .dashboard-patient-table td { padding: 11px 9px; }
+    .dashboard-person { display: flex; align-items: center; gap: 9px; }
+    .dashboard-person .avatar { width: 30px; height: 30px; flex-basis: 30px; font-size: 10px; }
+    .dashboard-person strong, .dashboard-person small { display: block; }
+    .dashboard-person small { color: var(--muted); font-size: 10px; }
+    .chart-bars { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 10px; align-items: end; height: 170px; padding: 12px 4px 0; border-bottom: 1px solid var(--line); }
+    .chart-day { height: 100%; display: flex; flex-direction: column; justify-content: end; align-items: center; gap: 7px; }
+    .chart-bar-track { width: min(26px, 70%); height: 125px; display: flex; align-items: end; border-radius: 6px; background: var(--surface-soft); overflow: hidden; }
+    .chart-bar { display: block; width: 100%; min-height: 0; border-radius: 6px 6px 0 0; background: #4389ec; transition: height .2s; }
+    .chart-day span { color: var(--muted); font-size: 10px; }
+    .chart-day strong { color: var(--ink); font-size: 10px; }
+    .chart-empty { min-height: 170px; display: grid; place-items: center; color: var(--muted); font-size: 12px; text-align: center; }
+    .exam-summary { display: flex; align-items: center; gap: 20px; min-height: 150px; }
+    .exam-donut { width: 128px; height: 128px; flex: 0 0 128px; display: grid; place-items: center; border-radius: 50%; background: conic-gradient(#4389ec 0 var(--available), #f0b84e var(--available) var(--pending-end), #34b38c var(--pending-end) 100%); position: relative; }
+    .exam-donut:before { content: ""; position: absolute; inset: 15px; background: var(--white); border-radius: 50%; }
+    .exam-donut-center { position: relative; z-index: 1; text-align: center; }
+    .exam-donut-center strong, .exam-donut-center span { display: block; }
+    .exam-donut-center strong { font-size: 20px; }
+    .exam-donut-center span { color: var(--muted); font-size: 10px; }
+    .exam-legend { display: grid; gap: 11px; font-size: 11px; }
+    .exam-legend div { display: flex; align-items: center; gap: 7px; }
+    .legend-dot { width: 8px; height: 8px; border-radius: 50%; background: #4389ec; }
+    .legend-dot.pending { background: #f0b84e; }
+    .legend-dot.reviewed { background: #34b38c; }
+    .dashboard-appointments { display: grid; gap: 0; }
+    .dashboard-appointments .appointment { grid-template-columns: 50px minmax(0, 1fr) auto; }
+    .dashboard-appointments .time { font-size: 12px; }
+    @media (max-width: 1000px) {
+      .sidebar { width: 216px; }
+      .main { margin-left: 216px; }
+      .dashboard-grid { grid-template-columns: minmax(0, 1.1fr) minmax(280px, .9fr); }
+    }
+    @media (max-width: 720px) {
+      .sidebar { width: 250px; transform: translateX(-101%); }
+      .main { margin-left: 0; }
+      .topbar { gap: 8px; }
+      .global-search { width: min(38vw, 220px); }
+      .dashboard-grid { grid-template-columns: 1fr; }
+      .exam-summary { justify-content: center; }
+      .dashboard-patient-table { min-width: 570px; }
+    }
+    @media (max-width: 480px) {
+      .topbar { padding: 0 12px; }
+      .topbar .crumb { display: none; }
+      .global-search { width: min(44vw, 180px); }
+      .topbar .top-actions { gap: 6px; }
+      #headerNew { width: 38px; height: 38px; padding: 0; overflow: hidden; font-size: 0; }
+      #headerNew:before { content: "+"; font-size: 20px; }
+      .content { padding: 20px 13px 40px; }
+      .exam-summary { flex-wrap: wrap; }
+    }
+  </style>
+</head>
+<body>
+  <div class="login-screen" id="loginScreen">
+    <form class="login-card" id="loginForm">
+      <div class="brand login-brand"><img class="login-brand-logo" src="vittacare-logo.png" alt="VittaCare Therapy"></div>
+      <p class="login-tagline">Tecnologia e cuidado em cada atendimento.</p>
+      <h1>Acesse sua clínica</h1>
+      <p class="subtitle">Entre com sua conta autorizada do Supabase.</p>
+      <details class="connection-settings">
+        <summary>Conexão do projeto</summary>
+        <p class="note">Configure URL e chave publicável no arquivo <code>supabase-config.js</code>. Se preferir, você também pode preencher estes campos manualmente.</p>
+        <div class="field"><label for="supabaseUrl">URL do projeto Supabase</label><input id="supabaseUrl" type="text" inputmode="url" autocomplete="url" placeholder="https://seu-projeto.supabase.co"></div>
+        <div class="field"><label for="supabaseAnonKey">Chave publicável (anon)</label><input id="supabaseAnonKey" type="password" autocomplete="off" placeholder="sb_publishable_... ou chave anon"></div>
+        <p class="note">Use apenas a chave publicável (anon/publishable). Nunca coloque a service_role/secret key no navegador.</p>
+      </details>
+      <div class="field"><label for="loginEmail">E-mail da conta</label><input id="loginEmail" type="email" autocomplete="username" required placeholder="voce@clinica.com"></div>
+      <div class="field"><label for="loginPassword">Senha</label><input id="loginPassword" type="password" autocomplete="current-password" required></div>
+      <div class="error" id="loginError" role="alert"></div>
+      <button class="btn btn-primary" type="submit">Entrar</button>
+      <p class="note" style="margin:14px 0 0">Contas são criadas pelo administrador no Supabase. Não há cadastro pelo site.</p>
+      <p class="note">Abra por HTTPS ou servidor local, como o Live Server do VS Code; o acesso direto via <code>file://</code> pode impedir a autenticação.</p>
+    </form>
+  </div>
+  <div class="app" id="app" hidden>
+    <aside class="sidebar" id="sidebar">
+      <div class="brand"><img class="brand-logo-symbol" src="vittacare-symbol.png" alt=""><span class="brand-copy"><strong>VittaCare</strong><small>Tecnologia e cuidado em cada atendimento.</small></span></div>
+      <div class="nav-label">MENU PRINCIPAL</div>
+      <nav class="nav" id="navigation">
+        <button class="active" data-page="dashboard"><span class="nav-icon">▦</span> Visão geral</button>
+        <button data-page="agenda"><span class="nav-icon">▣</span> Agenda</button>
+        <button data-page="patients"><span class="nav-icon">♙</span> Pacientes</button>
+        <button data-page="records"><span class="nav-icon">▤</span> Prontuários</button>
+        <button data-page="prescriptions"><span class="nav-icon">℞</span> Prescrições</button>
+        <button data-page="exams"><span class="nav-icon">⌕</span> Exames</button>
+        <button data-page="vaccines"><span class="nav-icon">✣</span> Vacinas</button>
+        <button data-page="certificates"><span class="nav-icon">▧</span> Atestados</button>
+        <div class="nav-label">GESTÃO</div>
+        <button data-page="finance"><span class="nav-icon">＄</span> Financeiro</button>
+        <button data-page="inventory"><span class="nav-icon">▣</span> Estoque</button>
+        <button data-page="tasks"><span class="nav-icon">☑</span> Tarefas</button>
+      </nav>
+      <div class="sidebar-bottom">
+        <button class="btn btn-sm" id="logoutBtn" style="width:100%;margin-bottom:14px">Sair do painel</button>
+        <div class="profile"><div class="avatar">V</div><div><strong>VittaCare</strong><small id="profileEmail">Conta Supabase</small></div></div>
+      </div>
+    </aside>
+    <main class="main">
+      <header class="topbar">
+        <div class="top-actions"><button class="btn btn-sm mobile-menu" id="menuBtn" aria-label="Abrir menu">☰</button><span class="crumb">VittaCare <span style="color:#c0c8d4"> / </span> <strong id="breadcrumb">Visão geral</strong></span></div>
+        <div class="global-search"><input id="globalSearch" type="search" autocomplete="off" placeholder="Buscar paciente por nome ou CPF" aria-label="Buscar pacientes"><div class="global-search-results" id="globalSearchResults" role="listbox" aria-label="Resultados da busca"></div></div>
+        <div class="top-actions"><span class="date-label" id="todayLabel"></span><button class="btn theme-toggle" id="themeToggle" aria-label="Ativar modo escuro" title="Ativar modo escuro">☾</button><button class="btn btn-sm btn-primary" id="headerNew">＋ Novo atendimento</button></div>
+      </header>
+      <section class="content" id="content"></section>
+    </main>
+  </div>
+  <div class="modal-backdrop" id="modalBackdrop" role="presentation">
+    <section class="modal" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
+      <div class="modal-head"><h2 id="modalTitle"></h2><button class="close" id="modalClose" aria-label="Fechar">×</button></div>
+      <div id="modalBody"></div>
+    </section>
+  </div>
+  <script src="supabase-config.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script>
+    const STORAGE_KEY = "clinica-prototipo-v1";
+    const CONFIG_KEY = "clinica-supabase-config-v1";
+    const titles = { dashboard: "Visão geral", agenda: "Agenda", patients: "Pacientes", records: "Prontuários", prescriptions: "Prescrições", exams: "Exames", vaccines: "Vacinas", certificates: "Atestados", finance: "Financeiro", inventory: "Estoque", tasks: "Tarefas" };
+    function emptyState() {
+      return { patients: [], appointments: [], records: [], prescriptions: [], exams: [], vaccines: [], certificates: [], transactions: [], inventory: [], tasks: [] };
+    }
+    let state = emptyState();
+    let supabaseClient = null;
+    let currentUser = null;
+    let saveQueue = Promise.resolve();
+    let localImportAvailable = false;
+    let currentPage = "dashboard";
+    let activePatientId = null;
+    let agendaDate = today();
+    const content = document.getElementById("content");
+    function saveState() {
+      const snapshot = structuredClone(state);
+      const write = saveQueue.then(async () => {
+        if (!supabaseClient || !currentUser) throw new Error("Você não está conectado ao banco de dados.");
+        const { error } = await supabaseClient.from("clinic_data").upsert(
+          { user_id: currentUser.id, data: snapshot, updated_at: new Date().toISOString() },
+          { onConflict: "user_id" }
+        );
+        if (error) throw error;
+        return true;
+      });
+      saveQueue = write.catch(error => {
+        console.error("Não foi possível salvar os dados no Supabase:", error);
+        toast(`Falha ao sincronizar com o Supabase: ${error.message || "erro desconhecido"}`);
+        return false;
+      });
+      return saveQueue;
+    }
+    function normalizeState(data) {
+      if (!data || typeof data !== "object" || Array.isArray(data)) throw new Error("Os dados salvos no Supabase estão em formato inválido.");
+      const normalized = { ...emptyState(), ...data };
+      for (const key of Object.keys(emptyState())) {
+        if (!Array.isArray(normalized[key])) throw new Error(`O campo "${key}" não está em um formato válido no banco.`);
+      }
+      return normalized;
+    }
+    function readConnectionConfig() {
+      const fileConfig=window.CLINIC_SUPABASE_CONFIG;
+      if(fileConfig && typeof fileConfig.url==="string" && typeof fileConfig.anonKey==="string" && fileConfig.url.trim() && fileConfig.anonKey.trim()) {
+        return { url:fileConfig.url.trim(), key:fileConfig.anonKey.trim() };
+      }
+      const raw = localStorage.getItem(CONFIG_KEY);
+      return raw ? JSON.parse(raw) : null;
+    }
+    function createSupabaseClient(url, key) {
+      if (!window.supabase || typeof window.supabase.createClient !== "function") {
+        throw new Error("Não foi possível carregar a biblioteca do Supabase. Confira sua conexão com a internet e recarregue a página.");
+      }
+      if (/^(sb_secret_|service_role)/i.test(key)) {
+        throw new Error("A chave informada tem privilégios de servidor. Use apenas a chave publicável anon/publishable.");
+      }
+      const tokenParts=key.split(".");
+      if(tokenParts.length===3){
+        try {
+          const payload=JSON.parse(atob(tokenParts[1].replace(/-/g,"+").replace(/_/g,"/")));
+          if(payload.role==="service_role")throw new Error("A service_role key não pode ser usada no navegador. Use apenas a chave publicável anon/publishable.");
+        } catch(error) {
+          if(error.message.includes("service_role"))throw error;
+        }
+      }
+      const parsedUrl = new URL(url);
+      if (parsedUrl.protocol !== "https:" && parsedUrl.hostname !== "localhost" && parsedUrl.hostname !== "127.0.0.1") {
+        throw new Error("A URL do Supabase precisa usar HTTPS.");
+      }
+      return window.supabase.createClient(parsedUrl.href.replace(/\/$/,""), key);
+    }
+    async function enterWorkspace(user) {
+      currentUser = user;
+      const { data: row, error } = await supabaseClient
+        .from("clinic_data")
+        .select("data")
+        .eq("user_id", user.id)
+        .maybeSingle();
+      if (error) throw error;
+      if (row) {
+        state = normalizeState(row.data);
+        localImportAvailable = false;
+      } else {
+        state = emptyState();
+        try { localImportAvailable = Boolean(localStorage.getItem(STORAGE_KEY)); }
+        catch (error) { console.error("Não foi possível verificar os dados locais antigos:", error); localImportAvailable = false; }
+      }
+      document.getElementById("profileEmail").textContent = user.email || "Conta Supabase";
+      document.getElementById("loginError").textContent = "";
+      document.getElementById("loginScreen").hidden = true;
+      document.getElementById("app").hidden = false;
+      render();
+    }
+    async function importLocalData() {
+      let localData;
+      try {
+        const raw = localStorage.getItem(STORAGE_KEY);
+        if (!raw) throw new Error("Não há dados antigos neste navegador para importar.");
+        localData = normalizeState(JSON.parse(raw));
+      } catch (error) {
+        console.error("Não foi possível ler os dados locais para importação:", error);
+        toast(`Não foi possível importar: ${error.message}`);
+        return;
+      }
+      state = localData;
+      const saved = await saveState();
+      if (!saved) return;
+      try { localStorage.removeItem(STORAGE_KEY); }
+      catch (error) { console.error("Os dados foram enviados, mas a cópia local não pôde ser removida:", error); toast("Importação concluída, mas a cópia antiga permaneceu neste navegador."); }
+      localImportAvailable = false;
+      render();
+      toast("Dados importados para o Supabase.");
+    }
+    function esc(value = "") { return String(value).replace(/[&<>"']/g, char => ({ "&":"&amp;", "<":"&lt;", ">":"&gt;", '"':"&quot;", "'":"&#39;" })[char]); }
+    function money(value) { return Number(value || 0).toLocaleString("pt-BR", { style: "currency", currency: "BRL" }); }
+    function dateKey(date = new Date()) {
+      const year=date.getFullYear();
+      const month=String(date.getMonth()+1).padStart(2,"0");
+      const day=String(date.getDate()).padStart(2,"0");
+      return `${year}-${month}-${day}`;
+    }
+    function today() { return dateKey(); }
+    function dateFromKey(key) {
+      const [year,month,day]=String(key||"").split("-").map(Number);
+      return year && month && day ? new Date(year,month-1,day) : null;
+    }
+    function formatDate(key, options = { day:"2-digit", month:"2-digit", year:"numeric" }) {
+      const date=dateFromKey(key);
+      return date ? new Intl.DateTimeFormat("pt-BR",options).format(date) : "—";
+    }
+    function toast(message) {
+      const old = document.querySelector(".toast");
+      if (old) old.remove();
+      const el = document.createElement("div"); el.className = "toast"; el.textContent = message; el.setAttribute("role", "status"); document.body.append(el);
+      setTimeout(() => el.remove(), 2800);
+    }
+    function setPage(page) {
+      currentPage = page; activePatientId = null;
+      globalSearchResults.classList.remove("open");
+      document.querySelectorAll("#navigation button[data-page]").forEach(button => button.classList.toggle("active", button.dataset.page === page));
+      document.getElementById("breadcrumb").textContent = titles[page] || titles.dashboard;
+      document.getElementById("sidebar").classList.remove("open");
+      render();
+    }
+    function render() {
+      const views = { dashboard: dashboardView, agenda: agendaView, patients: patientsView, records: recordsView, prescriptions: prescriptionsView, exams: examsView, vaccines: vaccinesView, certificates: certificatesView, finance: financeView, inventory: inventoryView, tasks: tasksView };
+      content.innerHTML = (views[currentPage] || dashboardView)();
+      bindPageEvents();
+    }
+    function heading(title, subtitle, button = "") { return `<div class="page-heading"><div><h1>${title}</h1><p class="subtitle">${subtitle}</p></div>${button}</div>`; }
+    function cardMetric(label, value, icon, note) { return `<article class="card metric"><div class="metric-top">${label}<span class="metric-icon">${icon}</span></div><div class="metric-value">${value}</div><div class="metric-note">${note}</div></article>`; }
+    function dashboardView() {
+      const todayAppointments = state.appointments.filter(item => (item.date || today()) === today());
+      const dueStock = state.inventory.filter(item => Number(item.quantity) <= Number(item.minimum)).length;
+      const pendingExams=state.exams.filter(item=>!["Resultado disponível","Revisado pelo profissional responsável","Revisado","Cancelado"].includes(item.status)).length;
+      const scheduledAppointments=todayAppointments.filter(item=>!["Cancelado","Não compareceu","Concluído","Atendimento concluído"].includes(item.status)).length;
+      const migrationBanner = localImportAvailable ? `<div class="banner"><strong>Dados antigos encontrados neste navegador.</strong> Importe-os uma única vez para sua conta Supabase ou descarte esta cópia local. <div class="form-actions"><button class="btn btn-sm" data-action="discard-local-data">Não importar</button><button class="btn btn-sm btn-primary" data-action="import-local-data">Importar dados locais</button></div></div>` : "";
+      const patientRows=[...state.patients].reverse().slice(0,5).map(patient=>`<tr><td><div class="dashboard-person"><span class="avatar">${esc(patient.name.trim().split(/\s+/).slice(0,2).map(part=>part[0]).join("").toUpperCase())}</span><span><strong>${esc(patient.name)}</strong><small>${esc(patient.email||"Paciente cadastrado")}</small></span></div></td><td>${esc(patient.phone||"—")}</td><td><button class="btn btn-sm" data-patient="${patient.id}">Ver perfil</button></td></tr>`).join("");
+      const week=Array.from({length:7},(_,index)=>{
+        const date=new Date(); date.setDate(date.getDate()-(6-index));
+        const key=dateKey(date);
+        return {key,label:new Intl.DateTimeFormat("pt-BR",{weekday:"short"}).format(date).replace(".",""),count:state.appointments.filter(item=>(item.date||today())===key).length};
+      });
+      const maxAppointments=Math.max(1,...week.map(day=>day.count));
+      const appointmentChart=week.some(day=>day.count)
+        ? `<div class="chart-bars" role="img" aria-label="Atendimentos agendados nos últimos sete dias">${week.map(day=>`<div class="chart-day" title="${esc(formatDate(day.key))}: ${day.count} atendimento(s)"><div class="chart-bar-track"><span class="chart-bar" style="height:${day.count?Math.max(8,Math.round(day.count/maxAppointments*100))+"%":"0"}"></span></div><strong>${day.count||""}</strong><span>${esc(day.label)}</span></div>`).join("")}</div>`
+        : `<div class="chart-empty">Ainda não há atendimentos nesta semana.</div>`;
+      const reviewedExams=state.exams.filter(item=>["Revisado pelo profissional responsável","Revisado"].includes(item.status)).length;
+      const availableExams=state.exams.filter(item=>item.status==="Resultado disponível").length;
+      const totalExams=state.exams.length;
+      const availablePercent=totalExams?availableExams/totalExams*100:0;
+      const pendingEnd=totalExams?(availableExams+pendingExams)/totalExams*100:0;
+      const examDonut=totalExams
+        ? `<div class="exam-summary"><div class="exam-donut" style="--available:${availablePercent}%;--pending-end:${pendingEnd}%"><div class="exam-donut-center"><strong>${totalExams}</strong><span>exames</span></div></div><div class="exam-legend"><div><i class="legend-dot"></i> Resultados: <strong>${availableExams}</strong></div><div><i class="legend-dot pending"></i> Pendentes: <strong>${pendingExams}</strong></div><div><i class="legend-dot reviewed"></i> Revisados: <strong>${reviewedExams}</strong></div></div></div>`
+        : `<div class="chart-empty">Nenhum exame registrado.</div>`;
+      const upcomingAppointments=[...todayAppointments].sort((a,b)=>a.time.localeCompare(b.time)).slice(0,4);
+      const appointmentRows=upcomingAppointments.length?upcomingAppointments.map(item=>`<div class="appointment"><span class="time">${esc(item.time||"—")}</span><div><div class="person">${esc(item.patient)}</div><div class="detail">${esc(item.type||"Consulta")}</div></div><span class="status ${["Aguardando","Aguardando atendimento"].includes(item.status)?"pending":""}">${esc(item.status||"Agendado")}</span></div>`).join(""):`<div class="empty">Nenhum atendimento agendado para hoje.</div>`;
+      return `${heading("Bem-vindo à VittaCare", "Tecnologia e cuidado em cada atendimento.", `<button class="btn btn-primary" data-action="new-appointment">＋ Agendar consulta</button>`)}
+        ${migrationBanner}
+        <div class="cards">${cardMetric("Consultas hoje",todayAppointments.length,"▣",`${scheduledAppointments} ainda na agenda`)}${cardMetric("Pacientes cadastrados",state.patients.length,"♙","Na base da clínica")}${cardMetric("Exames pendentes",pendingExams,"⌕",`${availableExams} resultado(s) disponível(is)`)}${cardMetric("Estoque baixo",dueStock,"▤",dueStock?"Itens precisam de atenção":"Tudo dentro do mínimo")}</div>
+        <div class="dashboard-grid">
+          <div>
+            <div class="panel"><div class="panel-head"><div><h2>Pacientes recentes</h2><span class="detail">Acesso rápido aos prontuários</span></div><button class="btn btn-sm" data-goto="patients">Ver todos →</button></div><div class="table-wrap"><table class="dashboard-patient-table"><thead><tr><th>Paciente</th><th>Contato</th><th></th></tr></thead><tbody>${patientRows||`<tr><td colspan="3" class="empty">Ainda não há pacientes. Cadastre o primeiro para começar.</td></tr>`}</tbody></table></div></div>
+            <div class="panel"><div class="panel-head"><div><h2>Resumo dos exames</h2><span class="detail">Acompanhamento de status</span></div><button class="btn btn-sm" data-goto="exams">Ver exames →</button></div>${examDonut}</div>
+          </div>
+          <div>
+            <div class="panel"><div class="panel-head"><div><h2>Atendimentos na semana</h2><span class="detail">Últimos sete dias</span></div><button class="btn btn-sm" data-goto="agenda">Agenda →</button></div>${appointmentChart}</div>
+            <div class="panel"><div class="panel-head"><div><h2>Agenda de hoje</h2><span class="detail">${formatDate(today(),{weekday:"long",day:"numeric",month:"long"})}</span></div><button class="btn btn-sm" data-action="new-appointment">＋ Novo</button></div><div class="dashboard-appointments">${appointmentRows}</div></div>
+            <div class="quick-grid"><button class="quick" data-action="new-patient"><span>♙</span><strong>Novo paciente</strong></button><button class="quick" data-action="new-record"><span>▤</span><strong>Nova nota clínica</strong></button></div>
+          </div>
+        </div>`;
+    }
+    function agendaView() {
+      const list = state.appointments.filter(item => (item.date || today()) === agendaDate).sort((a,b) => a.time.localeCompare(b.time));
+      return `${heading("Agenda", "Organize consultas e acompanhamentos.", `<button class="btn btn-primary" data-action="new-appointment">＋ Agendar consulta</button>`)}
+        <div class="panel"><div class="panel-head"><h2>Atendimentos</h2><input type="date" id="agendaDate" value="${agendaDate}" aria-label="Data da agenda"></div>
+        ${list.length ? list.map(item => `<div class="calendar-row"><div class="calendar-time">${esc(item.time)}</div><div><div class="person">${esc(item.patient)} <span class="status ${item.status === "Aguardando" ? "pending" : ""}">${esc(item.status)}</span></div><div class="detail">${esc(item.type)}</div></div><div class="row-actions"><button class="btn btn-sm" data-action="edit-appointment" data-id="${item.id}">Editar</button><button class="btn btn-sm" data-action="delete-appointment" data-id="${item.id}">Excluir</button></div></div>`).join("") : `<div class="empty">Sua agenda está vazia. Agende o primeiro atendimento.</div>`}</div>`;
+    }
+    function patientsView() {
+      if (activePatientId) return patientDetailView(activePatientId);
+      const rows = state.patients.map(patient => `<tr><td><strong>${esc(patient.name)}</strong></td><td>${esc(patient.cpf)}</td><td>${esc(patient.phone)}</td><td>${esc(patient.email)}</td><td>${esc(patient.blood || "—")}</td><td><button class="btn btn-sm" data-patient="${patient.id}">Abrir prontuário</button></td></tr>`).join("");
+      return `${heading("Pacientes", "Cadastro e informações de contato.", `<button class="btn btn-primary" data-action="new-patient">＋ Novo paciente</button>`)}
+        <div class="panel"><div class="toolbar"><div class="search"><input id="patientSearch" placeholder="Buscar por nome, CPF ou telefone" aria-label="Buscar pacientes"></div><span class="note">${state.patients.length} pacientes</span></div><div class="table-wrap"><table><thead><tr><th>Paciente</th><th>CPF</th><th>Telefone</th><th>E-mail</th><th>Tipo sanguíneo</th><th>Ação</th></tr></thead><tbody id="patientRows">${rows || `<tr><td colspan="6" class="empty">Nenhum paciente cadastrado.</td></tr>`}</tbody></table></div></div>`;
+    }
+    function patientDetailView(id) {
+      const patient = state.patients.find(item => item.id === id);
+      if (!patient) { activePatientId = null; return patientsView(); }
+      const records = state.records.filter(item => item.patient === patient.name);
+      const prescriptions = state.prescriptions.filter(item => item.patient === patient.name);
+      return `${heading(esc(patient.name), `Paciente · ${esc(patient.cpf || "CPF não informado")}`, `<button class="btn" data-action="back-patients">← Pacientes</button>`)}
+        <div class="banner">Alergias informadas: <strong>${esc(patient.allergies || "não informadas")}</strong> · Confira e valide as informações antes de qualquer conduta.</div>
+        <div class="page-grid"><div class="panel"><div class="panel-head"><h2>Dados do paciente</h2><button class="btn btn-sm" data-action="edit-patient" data-id="${patient.id}">Editar</button></div><p><strong>Nascimento:</strong> ${esc(patient.birth || "—")}</p><p><strong>Telefone:</strong> ${esc(patient.phone || "—")}</p><p><strong>E-mail:</strong> ${esc(patient.email || "—")}</p><p><strong>Tipo sanguíneo:</strong> ${esc(patient.blood || "—")}</p><p><strong>Observações:</strong> ${esc(patient.notes || "—")}</p></div>
+        <div><div class="panel"><div class="panel-head"><h2>Notas clínicas</h2><button class="btn btn-sm" data-action="new-record" data-patient="${esc(patient.name)}">＋ Adicionar</button></div>${records.length ? records.map(item => `<p class="note"><strong>${esc(item.date)}:</strong> ${esc(item.note)}</p>`).join("") : `<p class="note">Nenhuma nota registrada.</p>`}</div>
+        <div class="panel"><div class="panel-head"><h2>Prescrições</h2><button class="btn btn-sm" data-action="new-prescription" data-patient="${esc(patient.name)}">＋ Criar</button></div>${prescriptions.length ? prescriptions.map(item => `<p class="note"><strong>${esc(item.date)}:</strong> ${esc(item.medication)} — ${esc(item.instructions)}</p>`).join("") : `<p class="note">Nenhuma prescrição registrada.</p>`}</div>
+        <div class="panel"><div class="panel-head"><h2>Vacinas</h2><button class="btn btn-sm" data-action="new-vaccine" data-patient="${esc(patient.name)}">＋ Registrar</button></div>${state.vaccines.filter(item=>item.patient===patient.name).length ? state.vaccines.filter(item=>item.patient===patient.name).map(item=>`<p class="note"><strong>${esc(item.date)}:</strong> ${esc(item.vaccine)} · ${esc(item.dose||"dose não informada")}${item.nextDue?` · Próxima: ${esc(item.nextDue)}`:""}</p>`).join("") : `<p class="note">Nenhuma vacina registrada.</p>`}</div></div></div>`;
+    }
+    function recordsView() {
+      const rows = state.records.map(item => `<tr><td>${esc(item.date)}</td><td>${esc(item.patient)}</td><td>${esc(item.type)}</td><td>${esc(item.note)}</td></tr>`).join("");
+      return `${heading("Prontuários", "Registre evoluções e informações clínicas.", `<button class="btn btn-primary" data-action="new-record">＋ Nova nota</button>`)}
+        <div class="banner">Este protótipo não substitui um prontuário eletrônico certificado. Registre apenas informações autorizadas e revise antes de salvar.</div>
+        <div class="panel"><div class="table-wrap"><table><thead><tr><th>Data</th><th>Paciente</th><th>Tipo</th><th>Registro / evolução</th></tr></thead><tbody>${rows || `<tr><td colspan="4" class="empty">Nenhuma nota clínica cadastrada.</td></tr>`}</tbody></table></div></div>`;
+    }
+    function prescriptionsView() {
+      const rows = state.prescriptions.map(item => `<tr><td>${esc(item.date)}</td><td>${esc(item.patient)}</td><td>${esc(item.medication)}</td><td>${esc(item.instructions)}</td></tr>`).join("");
+      return `${heading("Prescrições", "Rascunhos de prescrições registrados na clínica.", `<button class="btn btn-primary" data-action="new-prescription">＋ Nova prescrição</button>`)}
+        <div class="banner">O sistema não recomenda medicamentos nem valida doses. A prescrição deve ser preenchida, conferida e assinada pelo profissional responsável.</div>
+        <div class="panel"><div class="table-wrap"><table><thead><tr><th>Data</th><th>Paciente</th><th>Medicamento</th><th>Orientação registrada</th></tr></thead><tbody>${rows || `<tr><td colspan="4" class="empty">Nenhuma prescrição registrada.</td></tr>`}</tbody></table></div></div>`;
+    }
+    function examsView() {
+      const rows = state.exams.map(item => `<tr><td>${esc(item.date)}</td><td>${esc(item.patient)}</td><td>${esc(item.exam)}</td><td>${esc(item.status)}</td><td>${esc(item.notes || "—")}</td></tr>`).join("");
+      return `${heading("Exames", "Solicitações e acompanhamento de resultados.", `<button class="btn btn-primary" data-action="new-exam">＋ Registrar exame</button>`)}
+        <div class="panel"><div class="table-wrap"><table><thead><tr><th>Data</th><th>Paciente</th><th>Exame</th><th>Status</th><th>Observações</th></tr></thead><tbody>${rows || `<tr><td colspan="5" class="empty">Nenhum exame cadastrado.</td></tr>`}</tbody></table></div></div>`;
+    }
+    function vaccinesView() {
+      const rows = state.vaccines.map(item => `<tr><td>${esc(item.date)}</td><td>${esc(item.patient)}</td><td>${esc(item.vaccine)}</td><td>${esc(item.dose || "—")}</td><td>${esc(item.lot || "—")}</td><td>${esc(item.nextDue || "—")}</td><td>${esc(item.notes || "—")}</td></tr>`).join("");
+      return `${heading("Vacinas", "Histórico de imunização e próximas doses.", `<button class="btn btn-primary" data-action="new-vaccine">＋ Registrar vacina</button>`)}
+        <div class="banner">Registre a aplicação conforme a carteira e o protocolo definidos pelo profissional responsável. Este painel não gera recomendações de vacinação.</div>
+        <div class="panel"><div class="table-wrap"><table><thead><tr><th>Data</th><th>Paciente</th><th>Vacina</th><th>Dose</th><th>Lote</th><th>Próxima dose</th><th>Observações</th></tr></thead><tbody>${rows || `<tr><td colspan="7" class="empty">Nenhuma vacina registrada.</td></tr>`}</tbody></table></div></div>`;
+    }
+    function certificatesView() {
+      const rows = state.certificates.map(item => `<tr><td>${esc(item.date)}</td><td>${esc(item.patient)}</td><td>${esc(item.kind)}</td><td>${esc(item.days)} ${Number(item.days) === 1 ? "dia" : "dias"}</td><td>${esc(item.reason || "—")}</td><td><button class="btn btn-sm" data-action="print-certificate" data-id="${item.id}">Ver / imprimir</button></td></tr>`).join("");
+      return `${heading("Atestados", "Rascunhos de atestado para revisão do profissional.", `<button class="btn btn-primary" data-action="new-certificate">＋ Novo atestado</button>`)}
+        <div class="banner">Os documentos são rascunhos, não têm assinatura digital nem validade legal automática. Revise, complete a identificação profissional e assine antes de emitir. A inclusão de CID é opcional e deve respeitar o consentimento e as normas aplicáveis.</div>
+        <div class="panel"><div class="table-wrap"><table><thead><tr><th>Data</th><th>Paciente</th><th>Tipo</th><th>Afastamento</th><th>Motivo / CID</th><th>Ação</th></tr></thead><tbody>${rows || `<tr><td colspan="6" class="empty">Nenhum atestado cadastrado.</td></tr>`}</tbody></table></div></div>`;
+    }
+    function financeView() {
+      const income = state.transactions.filter(item => item.type === "Entrada").reduce((sum,item) => sum + Number(item.amount), 0);
+      const expenses = state.transactions.filter(item => item.type === "Saída").reduce((sum,item) => sum + Number(item.amount), 0);
+      const rows = state.transactions.map(item => `<tr><td>${esc(item.date)}</td><td>${esc(item.description)}</td><td>${esc(item.category)}</td><td>${esc(item.type)}</td><td>${money(item.amount)}</td></tr>`).join("");
+      return `${heading("Financeiro", "Controle simples de entradas e despesas.", `<button class="btn btn-primary" data-action="new-transaction">＋ Lançamento</button>`)}
+        <div class="cards">${cardMetric("Entradas", money(income), "↗", "Total registrado")}${cardMetric("Despesas", money(expenses), "↘", "Total registrado")}${cardMetric("Saldo", money(income-expenses), "＄", "Entradas menos despesas")}${cardMetric("Lançamentos", state.transactions.length, "▤", "Registros cadastrados")}</div>
+        <div class="panel"><div class="table-wrap"><table><thead><tr><th>Data</th><th>Descrição</th><th>Categoria</th><th>Tipo</th><th>Valor</th></tr></thead><tbody>${rows || `<tr><td colspan="5" class="empty">Nenhum lançamento.</td></tr>`}</tbody></table></div></div>`;
+    }
+    function inventoryView() {
+      const rows = state.inventory.map(item => `<tr><td>${esc(item.name)}</td><td>${esc(item.quantity)} ${esc(item.unit)}</td><td>${esc(item.minimum)} ${esc(item.unit)}</td><td><span class="status ${Number(item.quantity)<=Number(item.minimum) ? "pending" : ""}">${Number(item.quantity)<=Number(item.minimum) ? "Repor" : "Adequado"}</span></td><td><button class="btn btn-sm" data-stock="${item.id}">Atualizar</button></td></tr>`).join("");
+      return `${heading("Estoque", "Acompanhe materiais e níveis mínimos.", `<button class="btn btn-primary" data-action="new-stock">＋ Novo item</button>`)}
+        <div class="panel"><div class="table-wrap"><table><thead><tr><th>Item</th><th>Quantidade</th><th>Mínimo</th><th>Status</th><th>Ação</th></tr></thead><tbody>${rows || `<tr><td colspan="5" class="empty">Nenhum item no estoque.</td></tr>`}</tbody></table></div></div>`;
+    }
+    function tasksView() {
+      return `${heading("Tarefas", "Lembretes e pendências da clínica.", `<button class="btn btn-primary" data-action="new-task">＋ Nova tarefa</button>`)}
+        <div class="panel">${state.tasks.length ? state.tasks.map(task => `<div class="appointment"><input type="checkbox" data-task="${task.id}" ${task.done ? "checked" : ""} aria-label="Concluir tarefa"><div><div class="person" style="${task.done ? "text-decoration:line-through;color:#8994a5" : ""}">${esc(task.title)}</div><div class="detail">${task.due ? `Prazo: ${esc(task.due)}` : "Sem prazo definido"}</div></div><span class="status ${task.done ? "" : "pending"}">${task.done ? "Concluída" : "Pendente"}</span></div>`).join("") : `<div class="empty">Nenhuma tarefa cadastrada.</div>`}</div>`;
+    }
+    function patientOptions(selected = "") {
+      return `<option value="">Selecione um paciente</option>${state.patients.map(p => `<option ${p.name === selected ? "selected" : ""} value="${esc(p.name)}">${esc(p.name)}</option>`).join("")}<option value="__new">＋ Cadastrar outro paciente</option>`;
+    }
+    function openModal(title, html) {
+      document.getElementById("modalTitle").textContent = title;
+      document.getElementById("modalBody").innerHTML = html;
+      document.getElementById("modalBackdrop").classList.add("open");
+      const first = document.querySelector("#modalBody input, #modalBody select, #modalBody textarea");
+      if (first) first.focus();
+    }
+    function closeModal() { document.getElementById("modalBackdrop").classList.remove("open"); }
+    function formShell(fields) { return `<form id="dataForm"><div class="field-grid">${fields}</div><div class="form-actions"><button type="button" class="btn" data-action="close-modal">Cancelar</button><button class="btn btn-primary" type="submit">Salvar</button></div></form>`; }
+    function newPatientForm(patient) {
+      const editing = Boolean(patient);
+      openModal(editing ? "Editar paciente" : "Cadastrar paciente", formShell(`
+        <div class="field full"><label>Nome completo *</label><input name="name" required value="${esc(patient?.name || "")}"></div>
+        <div class="field"><label>CPF</label><input name="cpf" value="${esc(patient?.cpf || "")}"></div><div class="field"><label>Data de nascimento</label><input name="birth" type="date" value="${esc(patient?.birth || "")}"></div>
+        <div class="field"><label>Telefone</label><input name="phone" value="${esc(patient?.phone || "")}"></div><div class="field"><label>E-mail</label><input name="email" type="email" value="${esc(patient?.email || "")}"></div>
+        <div class="field"><label>Tipo sanguíneo</label><select name="blood"><option value="">Não informado</option>${["A+","A-","B+","B-","AB+","AB-","O+","O-"].map(x=>`<option ${patient?.blood===x?"selected":""}>${x}</option>`).join("")}</select></div><div class="field"><label>Alergias informadas</label><input name="allergies" value="${esc(patient?.allergies || "")}"></div>
+        <div class="field full"><label>Observações</label><textarea name="notes">${esc(patient?.notes || "")}</textarea></div>`));
+      document.getElementById("dataForm").onsubmit = event => {
+        event.preventDefault(); const data = Object.fromEntries(new FormData(event.currentTarget));
+        if (editing) Object.assign(patient, data); else state.patients.push({ id: Date.now(), ...data });
+        saveState(); closeModal(); render(); toast(editing ? "Cadastro atualizado." : "Paciente cadastrado.");
+      };
+    }
+    function patientSelectField(name = "patient", selected = "") {
+      return `<div class="field full"><label>Paciente *</label><select name="${name}" required>${patientOptions(selected)}</select></div>`;
+    }
+    function registerAppointment() {
+      if (!state.patients.length) { toast("Cadastre um paciente antes de agendar."); newPatientForm(); return; }
+      openModal("Agendar atendimento", formShell(`${patientSelectField()}<div class="field"><label>Data</label><input name="date" type="date" value="${today()}" required></div><div class="field"><label>Horário</label><input name="time" type="time" required></div><div class="field full"><label>Tipo de atendimento</label><input name="type" required placeholder="Ex.: Consulta de retorno"></div>`));
+      const form = document.getElementById("dataForm");
+      form.querySelector('[name="patient"]').onchange = event => { if(event.target.value==="__new"){closeModal();newPatientForm();} };
+      form.onsubmit = event => { event.preventDefault(); const data = Object.fromEntries(new FormData(form)); if(data.patient==="__new") return; state.appointments.push({id:Date.now(), ...data, status:"Aguardando"}); saveState(); closeModal(); render(); toast("Atendimento agendado."); };
+    }
+    function editAppointment(id) {
+      const appointment=state.appointments.find(item=>item.id===Number(id));
+      if(!appointment)return;
+      openModal("Editar atendimento",formShell(`${patientSelectField("patient",appointment.patient)}<div class="field"><label>Data</label><input name="date" type="date" value="${esc(appointment.date || agendaDate)}" required></div><div class="field"><label>Horário</label><input name="time" type="time" value="${esc(appointment.time)}" required></div><div class="field full"><label>Tipo de atendimento</label><input name="type" value="${esc(appointment.type)}" required></div><div class="field full"><label>Status</label><select name="status">${["Aguardando","Confirmado","Em atendimento","Concluído","Cancelado"].map(status=>`<option ${appointment.status===status?"selected":""}>${status}</option>`).join("")}</select></div>`));
+      const form=document.getElementById("dataForm");
+      form.querySelector('[name="patient"]').onchange=event=>{if(event.target.value==="__new"){closeModal();newPatientForm();}};
+      form.onsubmit=event=>{event.preventDefault();const data=Object.fromEntries(new FormData(form));if(data.patient==="__new")return;Object.assign(appointment,data);saveState();closeModal();render();toast("Atendimento atualizado.");};
+    }
+    function deleteAppointment(id) {
+      const appointment=state.appointments.find(item=>item.id===Number(id));
+      if(!appointment)return;
+      if(!confirm(`Excluir o atendimento de ${appointment.patient} às ${appointment.time}?`))return;
+      state.appointments=state.appointments.filter(item=>item.id!==appointment.id);
+      saveState();render();toast("Atendimento excluído.");
+    }
+    function createRecord(patientName = "") {
+      if (!state.patients.length) { toast("Cadastre um paciente antes de registrar a nota."); newPatientForm(); return; }
+      openModal("Nova nota clínica", formShell(`${patientSelectField("patient", patientName)}<div class="field"><label>Data</label><input type="date" name="date" value="${today()}" required></div><div class="field"><label>Tipo de registro</label><select name="type"><option>Consulta</option><option>Evolução</option><option>Anamnese</option><option>Retorno</option></select></div><div class="field full"><label>Registro clínico *</label><textarea name="note" required placeholder="Registre informações clínicas relevantes..."></textarea></div>`));
+      const form=document.getElementById("dataForm"); form.querySelector('[name="patient"]').onchange=e=>{if(e.target.value==="__new"){closeModal();newPatientForm();}};
+      form.onsubmit = event => { event.preventDefault(); const data=Object.fromEntries(new FormData(form)); if(data.patient==="__new")return; state.records.unshift({id:Date.now(),...data}); saveState(); closeModal(); render(); toast("Nota clínica registrada."); };
+    }
+    function createPrescription(patientName = "") {
+      if (!state.patients.length) { toast("Cadastre um paciente antes de criar a prescrição."); newPatientForm(); return; }
+      openModal("Nova prescrição (rascunho)", formShell(`${patientSelectField("patient", patientName)}<div class="field"><label>Data</label><input type="date" name="date" value="${today()}" required></div><div class="field full"><label>Medicamento *</label><input name="medication" required></div><div class="field full"><label>Orientação / posologia *</label><textarea name="instructions" required placeholder="Preenchimento e conferência pelo profissional responsável"></textarea></div>`));
+      const form=document.getElementById("dataForm"); form.querySelector('[name="patient"]').onchange=e=>{if(e.target.value==="__new"){closeModal();newPatientForm();}};
+      form.onsubmit=event=>{event.preventDefault();const data=Object.fromEntries(new FormData(form));if(data.patient==="__new")return;state.prescriptions.unshift({id:Date.now(),...data});saveState();closeModal();render();toast("Rascunho registrado. Revise e assine.");};
+    }
+    function createExam() {
+      if (!state.patients.length) { toast("Cadastre um paciente antes de registrar exame."); newPatientForm(); return; }
+      openModal("Registrar exame", formShell(`${patientSelectField()}<div class="field"><label>Data</label><input type="date" name="date" value="${today()}" required></div><div class="field"><label>Exame</label><input name="exam" required></div><div class="field"><label>Status</label><select name="status"><option>Solicitado</option><option>Agendado</option><option>Realizado</option><option>Resultado disponível</option></select></div><div class="field full"><label>Observações</label><textarea name="notes"></textarea></div>`));
+      const form=document.getElementById("dataForm");form.querySelector('[name="patient"]').onchange=e=>{if(e.target.value==="__new"){closeModal();newPatientForm();}};
+      form.onsubmit=event=>{event.preventDefault();const data=Object.fromEntries(new FormData(form));if(data.patient==="__new")return;state.exams.unshift({id:Date.now(),...data});saveState();closeModal();render();toast("Exame registrado.");};
+    }
+    function createVaccine(patientName = "") {
+      if (!state.patients.length) { toast("Cadastre um paciente antes de registrar vacina."); newPatientForm(); return; }
+      openModal("Registrar vacinação", formShell(`${patientSelectField("patient",patientName)}<div class="field"><label>Data da aplicação</label><input type="date" name="date" value="${today()}" required></div><div class="field"><label>Vacina *</label><input name="vaccine" required></div><div class="field"><label>Identificação da dose</label><input name="dose" placeholder="Ex.: 1ª dose"></div><div class="field"><label>Lote</label><input name="lot"></div><div class="field"><label>Próxima dose</label><input type="date" name="nextDue"></div><div class="field full"><label>Observações / local de aplicação</label><textarea name="notes"></textarea></div>`));
+      const form=document.getElementById("dataForm");
+      form.querySelector('[name="patient"]').onchange=e=>{if(e.target.value==="__new"){closeModal();newPatientForm();}};
+      form.onsubmit=event=>{event.preventDefault();const data=Object.fromEntries(new FormData(form));if(data.patient==="__new")return;state.vaccines.unshift({id:Date.now(),...data});saveState();closeModal();render();toast("Vacinação registrada.");};
+    }
+    function createCertificate() {
+      if (!state.patients.length) { toast("Cadastre um paciente antes de criar o atestado."); newPatientForm(); return; }
+      openModal("Novo atestado (rascunho)", formShell(`${patientSelectField()}<div class="field"><label>Data de emissão</label><input type="date" name="date" value="${today()}" required></div><div class="field"><label>Tipo</label><select name="kind"><option>Atestado médico</option><option>Declaração de comparecimento</option></select></div><div class="field"><label>Dias de afastamento</label><input type="number" name="days" min="0" max="365" value="1" required></div><div class="field"><label>Período (opcional)</label><input name="period" placeholder="Ex.: manhã / 14h às 16h"></div><div class="field full"><label>Motivo ou CID (opcional)</label><input name="reason" placeholder="Informe apenas se aplicável e autorizado"></div><div class="field full"><label>Observações</label><textarea name="notes"></textarea></div>`));
+      const form=document.getElementById("dataForm");
+      form.querySelector('[name="patient"]').onchange=e=>{if(e.target.value==="__new"){closeModal();newPatientForm();}};
+      form.onsubmit=event=>{event.preventDefault();const data=Object.fromEntries(new FormData(form));if(data.patient==="__new")return;state.certificates.unshift({id:Date.now(),...data});saveState();closeModal();render();toast("Rascunho de atestado salvo para revisão.");};
+    }
+    function previewCertificate(id) {
+      const item=state.certificates.find(certificate=>certificate.id===Number(id));
+      if(!item)return;
+      const isDeclaration=item.kind==="Declaração de comparecimento";
+      const duration=Number(item.days)===1?"1 dia":`${esc(item.days)} dias`;
+      const statement=isDeclaration
+        ? `Declaro, para os devidos fins, que <strong>${esc(item.patient)}</strong> compareceu a atendimento nesta data${item.period?` (${esc(item.period)})`:""}.`
+        : `Atesto, para os devidos fins, que <strong>${esc(item.patient)}</strong> necessita de afastamento de suas atividades por ${duration}${item.period?`, no período ${esc(item.period)}`:""}, a partir desta data.`;
+      openModal("Prévia para impressão — rascunho", `<div class="banner">Rascunho sem assinatura ou validação digital. Complete a identificação profissional e revise antes de imprimir.</div><article class="certificate-paper"><img class="certificate-logo" src="vittacare-logo.png" alt="VittaCare Therapy"><div style="text-align:center">Tecnologia e cuidado em cada atendimento.</div><h2>${esc(item.kind).toUpperCase()}</h2><p>${statement}</p>${item.reason?`<p><strong>Motivo / CID informado:</strong> ${esc(item.reason)}</p>`:""}${item.notes?`<p>${esc(item.notes)}</p>`:""}<p style="text-align:right;margin-top:42px">${esc(formatDate(item.date,{day:"numeric",month:"long",year:"numeric"}))}</p><div class="certificate-signature">Assinatura e carimbo do(a) profissional<br>CRM: ____________________</div></article><div class="form-actions"><button class="btn" data-action="close-modal">Fechar</button><button class="btn btn-primary" data-action="print-now">Imprimir rascunho</button></div>`);
+    }
+    function createTransaction() {
+      openModal("Novo lançamento", formShell(`<div class="field full"><label>Descrição *</label><input name="description" required></div><div class="field"><label>Categoria</label><select name="category"><option>Consulta</option><option>Procedimento</option><option>Material</option><option>Aluguel</option><option>Outros</option></select></div><div class="field"><label>Tipo</label><select name="type"><option>Entrada</option><option>Saída</option></select></div><div class="field"><label>Valor (R$)</label><input name="amount" type="number" min="0.01" step="0.01" required></div><div class="field"><label>Data</label><input name="date" type="date" value="${today()}" required></div>`));
+      document.getElementById("dataForm").onsubmit=event=>{event.preventDefault();const data=Object.fromEntries(new FormData(event.currentTarget));state.transactions.unshift({id:Date.now(),...data,amount:Number(data.amount)});saveState();closeModal();render();toast("Lançamento registrado.");};
+    }
+    function createStock(item) {
+      const editing = Boolean(item);
+      openModal(editing ? "Atualizar estoque" : "Adicionar item ao estoque", formShell(`<div class="field full"><label>Nome do item *</label><input name="name" required value="${esc(item?.name || "")}" ${editing?"readonly":""}></div><div class="field"><label>Quantidade</label><input name="quantity" type="number" min="0" required value="${esc(item?.quantity ?? 0)}"></div><div class="field"><label>Unidade</label><input name="unit" required value="${esc(item?.unit || "unidades")}"></div><div class="field full"><label>Nível mínimo</label><input name="minimum" type="number" min="0" required value="${esc(item?.minimum ?? 0)}"></div>`));
+      document.getElementById("dataForm").onsubmit=event=>{event.preventDefault();const data=Object.fromEntries(new FormData(event.currentTarget));if(editing)Object.assign(item,{...data,quantity:Number(data.quantity),minimum:Number(data.minimum)});else state.inventory.push({id:Date.now(),...data,quantity:Number(data.quantity),minimum:Number(data.minimum)});saveState();closeModal();render();toast("Estoque atualizado.");};
+    }
+    function createTask() {
+      openModal("Nova tarefa",formShell(`<div class="field full"><label>Tarefa *</label><input name="title" required></div><div class="field full"><label>Prazo</label><input type="date" name="due"></div>`));
+      document.getElementById("dataForm").onsubmit=event=>{event.preventDefault();state.tasks.unshift({id:Date.now(),...Object.fromEntries(new FormData(event.currentTarget)),done:false});saveState();closeModal();render();toast("Tarefa criada.");};
+    }
+    function bindPageEvents() {
+      content.querySelectorAll("[data-action]").forEach(button => button.addEventListener("click", () => {
+        const action=button.dataset.action;
+        if(action==="new-patient")newPatientForm();
+        if(action==="new-appointment")registerAppointment();
+        if(action==="new-record")createRecord(button.dataset.patient || "");
+        if(action==="new-prescription")createPrescription(button.dataset.patient || "");
+        if(action==="new-exam")createExam();
+        if(action==="new-vaccine")createVaccine(button.dataset.patient || "");
+        if(action==="new-certificate")createCertificate();
+        if(action==="print-certificate")previewCertificate(button.dataset.id);
+        if(action==="edit-appointment")editAppointment(button.dataset.id);
+        if(action==="delete-appointment")deleteAppointment(button.dataset.id);
+        if(action==="new-transaction")createTransaction();
+        if(action==="new-stock")createStock();
+        if(action==="new-task")createTask();
+        if(action==="import-local-data")importLocalData();
+        if(action==="discard-local-data"){
+          if(confirm("Descartar a cópia de dados antiga deste navegador? Esta ação não afeta os dados no Supabase.")){
+            try { localStorage.removeItem(STORAGE_KEY); localImportAvailable=false; render(); toast("Cópia local antiga removida."); }
+            catch(error) { console.error("Não foi possível remover a cópia local antiga:",error); toast("Não foi possível remover a cópia local."); }
+          }
+        }
+        if(action==="edit-patient")newPatientForm(state.patients.find(p=>p.id===Number(button.dataset.id)));
+        if(action==="back-patients"){activePatientId=null;render();}
+        if(action==="close-modal")closeModal();
+      }));
+      content.querySelectorAll("[data-goto]").forEach(button=>button.addEventListener("click",()=>setPage(button.dataset.goto)));
+      content.querySelectorAll("[data-patient]").forEach(button=>button.addEventListener("click",()=>{activePatientId=Number(button.dataset.patient);render();}));
+      content.querySelectorAll("[data-stock]").forEach(button=>button.addEventListener("click",()=>createStock(state.inventory.find(item=>item.id===Number(button.dataset.stock)))));
+      content.querySelectorAll("[data-task]").forEach(input=>input.addEventListener("change",()=>{const task=state.tasks.find(t=>t.id===Number(input.dataset.task));if(task)task.done=input.checked;saveState();render();}));
+      const datePicker = document.getElementById("agendaDate");
+      if (datePicker) datePicker.addEventListener("change", () => { agendaDate = datePicker.value || today(); render(); });
+      const search=document.getElementById("patientSearch");
+      if(search)search.addEventListener("input",()=>{const q=search.value.toLowerCase();const matches=state.patients.filter(p=>[p.name,p.cpf,p.phone].some(value=>String(value||"").toLowerCase().includes(q)));document.getElementById("patientRows").innerHTML=matches.length?matches.map(patient=>`<tr><td><strong>${esc(patient.name)}</strong></td><td>${esc(patient.cpf)}</td><td>${esc(patient.phone)}</td><td>${esc(patient.email)}</td><td>${esc(patient.blood||"—")}</td><td><button class="btn btn-sm" data-patient="${patient.id}">Abrir prontuário</button></td></tr>`).join(""):`<tr><td colspan="6" class="empty">Nenhum paciente encontrado.</td></tr>`;document.querySelectorAll("#patientRows [data-patient]").forEach(button=>button.addEventListener("click",()=>{activePatientId=Number(button.dataset.patient);render();}));});
+    }
+    const globalSearch=document.getElementById("globalSearch");
+    const globalSearchResults=document.getElementById("globalSearchResults");
+    function updateGlobalSearch() {
+      const query=globalSearch.value.trim().toLocaleLowerCase("pt-BR");
+      if(!query){globalSearchResults.replaceChildren();globalSearchResults.classList.remove("open");return;}
+      const matches=state.patients.filter(patient=>[patient.name,patient.cpf,patient.phone].some(value=>String(value||"").toLocaleLowerCase("pt-BR").includes(query))).slice(0,8);
+      globalSearchResults.innerHTML=matches.length
+        ? matches.map(patient=>`<button type="button" role="option" data-global-patient="${patient.id}"><span class="avatar">${esc(patient.name.trim().split(/\s+/).slice(0,2).map(part=>part[0]).join("").toUpperCase())}</span><span><strong>${esc(patient.name)}</strong><span class="detail">${esc(patient.cpf||patient.phone||"Paciente")}</span></span></button>`).join("")
+        : `<div class="global-search-empty">Nenhum paciente encontrado.</div>`;
+      globalSearchResults.classList.add("open");
+    }
+    function openPatientRecord(id) {
+      activePatientId=Number(id);
+      currentPage="patients";
+      document.querySelectorAll("#navigation button[data-page]").forEach(button=>button.classList.toggle("active",button.dataset.page==="patients"));
+      document.getElementById("breadcrumb").textContent=titles.patients;
+      globalSearch.value="";
+      globalSearchResults.replaceChildren();
+      globalSearchResults.classList.remove("open");
+      document.getElementById("sidebar").classList.remove("open");
+      render();
+    }
+    globalSearch.addEventListener("input",updateGlobalSearch);
+    globalSearch.addEventListener("keydown",event=>{
+      if(event.key==="Enter"){
+        const first=globalSearchResults.querySelector("[data-global-patient]");
+        if(first){event.preventDefault();openPatientRecord(first.dataset.globalPatient);}
+      }
+      if(event.key==="Escape"){globalSearch.value="";updateGlobalSearch();}
+    });
+    globalSearchResults.addEventListener("click",event=>{
+      const result=event.target.closest("[data-global-patient]");
+      if(result)openPatientRecord(result.dataset.globalPatient);
+    });
+    document.addEventListener("click",event=>{
+      if(!event.target.closest(".global-search"))globalSearchResults.classList.remove("open");
+    });
+    document.getElementById("navigation").addEventListener("click",event=>{const button=event.target.closest("[data-page]");if(button)setPage(button.dataset.page);});
+    document.getElementById("headerNew").addEventListener("click",registerAppointment);
+    document.getElementById("menuBtn").addEventListener("click",()=>document.getElementById("sidebar").classList.toggle("open"));
+    document.getElementById("modalClose").addEventListener("click",closeModal);
+    document.getElementById("modalBody").addEventListener("click",event=>{
+      const button=event.target.closest("[data-action]");
+      if(!button)return;
+      if(button.dataset.action==="close-modal")closeModal();
+      if(button.dataset.action==="print-now")window.print();
+    });
+    document.getElementById("modalBackdrop").addEventListener("click",event=>{if(event.target.id==="modalBackdrop")closeModal();});
+    document.addEventListener("keydown",event=>{if(event.key==="Escape")closeModal();});
+    document.getElementById("loginForm").addEventListener("submit",async event=>{
+      event.preventDefault();
+      const errorBox=document.getElementById("loginError");
+      const submitButton=event.currentTarget.querySelector('[type="submit"]');
+      errorBox.textContent="";
+      submitButton.disabled=true;
+      submitButton.textContent="Conectando…";
+      try {
+        const configured=readConnectionConfig();
+        const url=document.getElementById("supabaseUrl").value.trim() || configured?.url || "";
+        const key=document.getElementById("supabaseAnonKey").value.trim() || configured?.key || "";
+        const email=document.getElementById("loginEmail").value.trim();
+        const password=document.getElementById("loginPassword").value;
+        if(!url || !key) throw new Error("Informe a URL do projeto e a chave publicável do Supabase no arquivo supabase-config.js ou nos campos de conexão.");
+        supabaseClient=createSupabaseClient(url,key);
+        const {data,error}=await supabaseClient.auth.signInWithPassword({email,password});
+        if(error)throw error;
+        await enterWorkspace(data.user);
+      } catch(error) {
+        console.error("Falha no login ou na conexão com o Supabase:",error);
+        errorBox.textContent=error.message || "Não foi possível entrar. Confira os dados e tente novamente.";
+        if(supabaseClient) await supabaseClient.auth.signOut();
+        currentUser=null;
+      } finally {
+        submitButton.disabled=false;
+        submitButton.textContent="Entrar";
+      }
+    });
+    document.getElementById("logoutBtn").addEventListener("click",async()=>{
+      if(!supabaseClient)return;
+      try {
+        const lastSaveResult=await saveQueue;
+        if(lastSaveResult===false){toast("Há alterações sem sincronização. Reconecte e tente sair novamente.");return;}
+        const {error}=await supabaseClient.auth.signOut();
+        if(error)throw error;
+        currentUser=null;
+        location.reload();
+      } catch(error) {
+        console.error("Falha ao sair do Supabase:",error);
+        toast(`Não foi possível encerrar a sessão: ${error.message || "erro desconhecido"}`);
+      }
+    });
+    document.getElementById("todayLabel").textContent=new Intl.DateTimeFormat("pt-BR",{weekday:"short",day:"numeric",month:"short",year:"numeric"}).format(new Date());
+    function applyTheme(theme) {
+      const dark=theme==="dark";
+      document.documentElement.dataset.theme=dark?"dark":"light";
+      document.getElementById("themeToggle").textContent=dark?"☀":"☾";
+      document.getElementById("themeToggle").title=dark?"Ativar modo claro":"Ativar modo escuro";
+      document.getElementById("themeToggle").setAttribute("aria-label",dark?"Ativar modo claro":"Ativar modo escuro");
+      document.getElementById("themeColor").content=dark?"#111a28":"#f5f8fc";
+    }
+    let savedTheme="light";
+    try { savedTheme=localStorage.getItem("clinica-tema")==="dark"?"dark":"light"; }
+    catch(error) { console.error("Não foi possível carregar a preferência de tema:",error); }
+    applyTheme(savedTheme);
+    document.getElementById("themeToggle").addEventListener("click",()=>{
+      const next=document.documentElement.dataset.theme==="dark"?"light":"dark";
+      applyTheme(next);
+      try { localStorage.setItem("clinica-tema",next); }
+      catch(error) { console.error("Não foi possível salvar a preferência de tema:",error); toast("A preferência de tema não pôde ser salva."); }
+    });
+    async function restoreSupabaseSession() {
+      try {
+        const config=readConnectionConfig();
+        if(!config || !config.url || !config.key)return;
+        document.getElementById("supabaseUrl").value=config.url;
+        document.getElementById("supabaseAnonKey").value=config.key;
+        supabaseClient=createSupabaseClient(config.url,config.key);
+        const {data,error}=await supabaseClient.auth.getSession();
+        if(error)throw error;
+        if(data.session)await enterWorkspace(data.session.user);
+      } catch(error) {
+        console.error("Não foi possível restaurar a sessão Supabase:",error);
+        document.getElementById("loginError").textContent=error.message || "Falha ao conectar ao Supabase.";
+      }
+    }
+    restoreSupabaseSession();
+  </script>
+</body>
+</html>
