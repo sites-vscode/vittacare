@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="theme-color" content="#f5f8fc" id="themeColor">
   <meta name="description" content="VittaCare — Tecnologia e cuidado em cada atendimento.">
-  <link rel="icon" type="image/png" href="simbolo.png">
+  <link rel="icon" type="image/png" href="vittacare-symbol.png">
   <title>VittaCare — Tecnologia e cuidado em cada atendimento</title>
   <style>
     :root {
@@ -139,11 +139,13 @@
     .modal { width: min(600px, 100%); max-height: 92vh; overflow: auto; background: var(--white); border-radius: 16px; padding: 22px; box-shadow: 0 20px 70px #172b4d33; }
     .modal-head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 18px; }
     .close { border: 0; background: transparent; color: var(--muted); font-size: 22px; }
-    .login-screen { position: fixed; inset: 0; z-index: 30; background: var(--bg); display: grid; place-items: center; padding: 20px; }
-    .login-card { width: min(390px, 100%); background: var(--white); padding: 30px; border: 1px solid var(--line); border-radius: 18px; box-shadow: var(--shadow); }
+    .login-screen { position: fixed; inset: 0; z-index: 30; background: var(--bg); display: flex; align-items: flex-start; justify-content: center; padding: 20px; overflow-y: auto; }
+    .login-card { width: min(390px, 100%); margin-block: auto; background: var(--white); padding: 24px 30px; border: 1px solid var(--line); border-radius: 18px; box-shadow: var(--shadow); }
     .login-card h1 { font-size: 22px; margin: 15px 0 5px; }
     .login-card .field { margin-top: 18px; }
     .login-card .btn { width: 100%; margin-top: 12px; }
+    .login-progress { min-height: 18px; margin: 8px 0 0; color: var(--muted); font-size: 12px; text-align: center; }
+    .login-progress:empty { display: none; }
     .connection-settings { margin-top: 16px; padding: 12px; border: 1px solid var(--line); border-radius: 10px; background: var(--surface-soft); }
     .connection-settings summary { cursor: pointer; font-weight: 650; font-size: 12px; }
     .connection-settings .field { margin-top: 12px; }
@@ -199,7 +201,7 @@
     .sidebar .avatar { background: #e4efff; color: #1d4d84; }
     .sidebar .brand-copy small { color: #a7bdd5; max-width: 135px; }
     .login-brand { display: flex; justify-content: center; padding: 0 0 7px !important; }
-    .login-brand-logo { display: block; width: min(245px, 78%); height: auto; border-radius: 8px; }
+    .login-brand-logo { display: block; width: min(205px, 70%); height: auto; border-radius: 8px; }
     .login-tagline { margin: 0; color: var(--muted); font-size: 12px; text-align: center; }
     .certificate-logo { display: block; width: 150px; height: auto; margin: 0 auto 8px; }
     .main { margin-left: 216px; }
@@ -276,12 +278,19 @@
       .content { padding: 20px 13px 40px; }
       .exam-summary { flex-wrap: wrap; }
     }
+    @media (max-height: 720px) {
+      .login-screen { padding-block: 12px; }
+      .login-card { padding-block: 18px; }
+      .login-brand-logo { width: min(160px, 62%); }
+      .login-card h1 { margin-top: 8px; }
+      .login-card .field { margin-top: 12px; }
+    }
   </style>
 </head>
 <body>
   <div class="login-screen" id="loginScreen">
     <form class="login-card" id="loginForm">
-      <div class="brand login-brand"><img class="login-brand-logo" src="logotipo.png" alt="VittaCare Therapy"></div>
+      <div class="brand login-brand"><img class="login-brand-logo" src="vittacare-logo.png" alt="VittaCare Therapy"></div>
       <p class="login-tagline">Tecnologia e cuidado em cada atendimento.</p>
       <h1>Acesse sua clínica</h1>
       <p class="subtitle">Entre com sua conta autorizada do Supabase.</p>
@@ -296,13 +305,14 @@
       <div class="field"><label for="loginPassword">Senha</label><input id="loginPassword" type="password" autocomplete="current-password" required></div>
       <div class="error" id="loginError" role="alert"></div>
       <button class="btn btn-primary" type="submit">Entrar</button>
+      <p class="login-progress" id="loginProgress" role="status" aria-live="polite"></p>
       <p class="note" style="margin:14px 0 0">Contas são criadas pelo administrador no Supabase. Não há cadastro pelo site.</p>
       <p class="note">Abra por HTTPS ou servidor local, como o Live Server do VS Code; o acesso direto via <code>file://</code> pode impedir a autenticação.</p>
     </form>
   </div>
   <div class="app" id="app" hidden>
     <aside class="sidebar" id="sidebar">
-      <div class="brand"><img class="brand-logo-symbol" src="simbolo.png" alt=""><span class="brand-copy"><strong>VittaCare</strong><small>Tecnologia e cuidado em cada atendimento.</small></span></div>
+      <div class="brand"><img class="brand-logo-symbol" src="vittacare-symbol.png" alt=""><span class="brand-copy"><strong>VittaCare</strong><small>Tecnologia e cuidado em cada atendimento.</small></span></div>
       <div class="nav-label">MENU PRINCIPAL</div>
       <nav class="nav" id="navigation">
         <button class="active" data-page="dashboard"><span class="nav-icon">▦</span> Visão geral</button>
@@ -349,6 +359,8 @@
     }
     let state = emptyState();
     let supabaseClient = null;
+    let supabaseClientUrl = null;
+    let supabaseClientKey = null;
     let currentUser = null;
     let saveQueue = Promise.resolve();
     let localImportAvailable = false;
@@ -412,13 +424,43 @@
       }
       return window.supabase.createClient(parsedUrl.href.replace(/\/$/,""), key);
     }
+    function connectSupabase(url, key) {
+      const parsedUrl = new URL(url).href.replace(/\/$/,"");
+      if(supabaseClient && supabaseClientUrl===parsedUrl && supabaseClientKey===key)return supabaseClient;
+      supabaseClient=createSupabaseClient(parsedUrl,key);
+      supabaseClientUrl=parsedUrl;
+      supabaseClientKey=key;
+      return supabaseClient;
+    }
+    function friendlyLoginError(error) {
+      const message=String(error?.message||"");
+      if(/invalid login credentials/i.test(message))return "E-mail ou senha incorretos. Confira os dados da conta criada no Supabase.";
+      if(/email not confirmed/i.test(message))return "O e-mail desta conta ainda não foi confirmado. Confirme-o no Supabase Authentication ou peça ao administrador para confirmar a conta.";
+      if(/failed to fetch|networkerror|fetch failed/i.test(message))return "Não foi possível conectar ao Supabase. Confira a conexão e a URL do projeto.";
+      if(/tempo limite|timed out|timeout/i.test(message))return "O Supabase demorou demais para responder. Verifique sua conexão, recarregue a página e tente novamente.";
+      if(/clinic_data|schema cache|relation .* does not exist/i.test(message))return "O login foi validado, mas a tabela clinic_data não foi encontrada ou não pôde ser acessada. Execute o arquivo supabase-schema.sql no SQL Editor do seu projeto.";
+      if(/row-level security|permission denied|not allowed/i.test(message))return "O banco recusou o acesso aos dados. Confira as políticas RLS executando novamente supabase-schema.sql no projeto correto.";
+      return message || "Não foi possível entrar. Confira os dados e tente novamente.";
+    }
+    function withTimeout(promise, milliseconds, message) {
+      let timer;
+      const timeout=new Promise((_,reject)=>{
+        timer=setTimeout(()=>reject(new Error(message)),milliseconds);
+      });
+      return Promise.race([promise,timeout]).finally(()=>clearTimeout(timer));
+    }
     async function enterWorkspace(user) {
+      document.getElementById("loginProgress").textContent="Conta validada. Buscando os dados da clínica no banco…";
       currentUser = user;
-      const { data: row, error } = await supabaseClient
-        .from("clinic_data")
-        .select("data")
-        .eq("user_id", user.id)
-        .maybeSingle();
+      const { data: row, error } = await withTimeout(
+        supabaseClient
+          .from("clinic_data")
+          .select("data")
+          .eq("user_id", user.id)
+          .maybeSingle(),
+        20000,
+        "Tempo limite ao carregar os dados. O login foi validado, mas o banco não respondeu em 20 segundos."
+      );
       if (error) throw error;
       if (row) {
         state = normalizeState(row.data);
@@ -799,6 +841,7 @@
       const errorBox=document.getElementById("loginError");
       const submitButton=event.currentTarget.querySelector('[type="submit"]');
       errorBox.textContent="";
+      document.getElementById("loginProgress").textContent="Conectando ao Supabase…";
       submitButton.disabled=true;
       submitButton.textContent="Conectando…";
       try {
@@ -808,18 +851,30 @@
         const email=document.getElementById("loginEmail").value.trim();
         const password=document.getElementById("loginPassword").value;
         if(!url || !key) throw new Error("Informe a URL do projeto e a chave publicável do Supabase no arquivo supabase-config.js ou nos campos de conexão.");
-        supabaseClient=createSupabaseClient(url,key);
-        const {data,error}=await supabaseClient.auth.signInWithPassword({email,password});
+        connectSupabase(url,key);
+        const {data,error}=await withTimeout(
+          supabaseClient.auth.signInWithPassword({email,password}),
+          20000,
+          "Tempo limite ao validar sua conta. O Supabase não respondeu em 20 segundos."
+        );
         if(error)throw error;
+        document.getElementById("loginProgress").textContent="Login confirmado. Carregando os dados da clínica…";
         await enterWorkspace(data.user);
       } catch(error) {
         console.error("Falha no login ou na conexão com o Supabase:",error);
-        errorBox.textContent=error.message || "Não foi possível entrar. Confira os dados e tente novamente.";
-        if(supabaseClient) await supabaseClient.auth.signOut();
+        errorBox.textContent=friendlyLoginError(error);
+        document.getElementById("loginProgress").textContent="";
+        errorBox.scrollIntoView({block:"center",behavior:"smooth"});
+        if(supabaseClient) {
+          supabaseClient.auth.signOut().then(({error:signOutError})=>{
+            if(signOutError)console.error("Também não foi possível limpar a sessão Supabase:",signOutError);
+          }).catch(signOutError=>console.error("Também não foi possível limpar a sessão Supabase:",signOutError));
+        }
         currentUser=null;
       } finally {
         submitButton.disabled=false;
         submitButton.textContent="Entrar";
+        if(!currentUser)document.getElementById("loginProgress").textContent="";
       }
     });
     document.getElementById("logoutBtn").addEventListener("click",async()=>{
@@ -861,7 +916,7 @@
         if(!config || !config.url || !config.key)return;
         document.getElementById("supabaseUrl").value=config.url;
         document.getElementById("supabaseAnonKey").value=config.key;
-        supabaseClient=createSupabaseClient(config.url,config.key);
+        connectSupabase(config.url,config.key);
         const {data,error}=await supabaseClient.auth.getSession();
         if(error)throw error;
         if(data.session)await enterWorkspace(data.session.user);
