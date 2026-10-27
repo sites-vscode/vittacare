@@ -171,6 +171,21 @@
     :root[data-theme="dark"] .emergency-priority.critical { background: #48292d; color: #ff9a9a; }
     :root[data-theme="dark"] .emergency-priority.high { background: #493221; color: #ffc080; }
     :root[data-theme="dark"] .emergency-priority.medium { background: #443a21; color: #f1d478; }
+    .queue-board { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 14px; align-items: start; }
+    .queue-column { min-width: 0; }
+    .queue-column .panel { height: 100%; }
+    .queue-ticket { padding: 13px 0; border-top: 1px solid var(--line-soft); }
+    .queue-ticket:first-of-type { border-top: 0; }
+    .queue-ticket-head { display: flex; justify-content: space-between; align-items: flex-start; gap: 8px; }
+    .queue-patient { font-weight: 700; }
+    .queue-priority { display: inline-flex; border-radius: 20px; padding: 3px 8px; background: var(--surface-soft); color: var(--muted-strong); font-size: 10px; font-weight: 750; white-space: nowrap; }
+    .queue-priority.urgent { background: #ffe8e8; color: #b42318; }
+    .queue-priority.preferred { background: #fff6e5; color: #a36b0b; }
+    :root[data-theme="dark"] .queue-priority.urgent { background: #48292d; color: #ff9a9a; }
+    :root[data-theme="dark"] .queue-priority.preferred { background: #44351e; color: #f1c66f; }
+    .queue-wait { margin-top: 5px; color: var(--muted); font-size: 11px; }
+    .queue-actions { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 10px; }
+    @media (max-width: 900px) { .queue-board { grid-template-columns: 1fr; } }
     .connection-settings { margin-top: 16px; padding: 12px; border: 1px solid var(--line); border-radius: 10px; background: var(--surface-soft); }
     .connection-settings summary { cursor: pointer; font-weight: 650; font-size: 12px; }
     .connection-settings .field { margin-top: 12px; }
@@ -340,6 +355,7 @@
       <div class="brand"><img class="brand-logo-symbol" src="simbolo.png" alt=""><span class="brand-copy"><strong>VittaCare</strong><small>Tecnologia e cuidado em cada atendimento.</small></span></div>
       <div class="nav-label">MENU PRINCIPAL</div>
       <nav class="nav" id="navigation">
+        <button data-page="queue"><span class="nav-icon">☷</span> Fila de atendimento</button>
         <button data-page="emergency"><span class="nav-icon">✚</span> Emergência</button>
         <button data-page="referrals"><span class="nav-icon">➜</span> Encaminhamentos</button>
         <button class="active" data-page="dashboard"><span class="nav-icon">▦</span> Visão geral</button>
@@ -381,15 +397,18 @@
   <script>
     const STORAGE_KEY = "clinica-prototipo-v1";
     const CONFIG_KEY = "clinica-supabase-config-v1";
-    const titles = { dashboard: "Visão geral", emergency: "Emergência", referrals: "Encaminhamentos", agenda: "Agenda", patients: "Pacientes", records: "Prontuários", prescriptions: "Prescrições", exams: "Exames", vaccines: "Vacinas", certificates: "Atestados", finance: "Financeiro", inventory: "Estoque", tasks: "Tarefas" };
+    const titles = { dashboard: "Visão geral", queue: "Fila de atendimento", emergency: "Emergência", referrals: "Encaminhamentos", agenda: "Agenda", patients: "Pacientes", records: "Prontuários", prescriptions: "Prescrições", exams: "Exames", vaccines: "Vacinas", certificates: "Atestados", finance: "Financeiro", inventory: "Estoque", tasks: "Tarefas" };
     function emptyState() {
-      return { patients: [], appointments: [], emergencies: [], referrals: [], records: [], prescriptions: [], exams: [], vaccines: [], certificates: [], transactions: [], inventory: [], tasks: [] };
+      return { patients: [], appointments: [], queue: [], emergencies: [], referrals: [], records: [], prescriptions: [], exams: [], vaccines: [], certificates: [], transactions: [], inventory: [], tasks: [] };
     }
     let state = emptyState();
     let supabaseClient = null;
     let supabaseClientUrl = null;
     let supabaseClientKey = null;
     let currentUser = null;
+    let clinicRealtimeChannel = null;
+    let queueRealtimeStatus = "connecting";
+    let lastClinicUpdateAt = 0;
     let saveQueue = Promise.resolve();
     let localImportAvailable = false;
     let currentPage = "dashboard";
@@ -431,6 +450,7 @@
     }
     const deletableCollections={
       appointments:"atendimento da agenda",
+      queue:"registro da fila",
       emergencies:"atendimento de emergência",
       referrals:"encaminhamento",
       records:"registro do prontuário",
@@ -448,6 +468,7 @@
       const item=items.find(entry=>String(entry.id)===String(id));
       if(!item)return;
       const label=collection==="appointments"?`o atendimento de ${item.patient} às ${item.time}`:
+        collection==="queue"?`o registro de fila de ${item.patient}`:
         collection==="emergencies"?`o atendimento de emergência de ${item.patient}`:
         collection==="referrals"?`o encaminhamento de ${item.patient} para ${item.destination}`:
         collection==="records"?`o registro clínico de ${item.patient}`:
@@ -475,7 +496,7 @@
       );
     }
     function openClearDataModal() {
-      const labels={patients:"Pacientes",appointments:"Agenda",emergencies:"Emergências",referrals:"Encaminhamentos",records:"Prontuários",prescriptions:"Prescrições",exams:"Exames",vaccines:"Vacinas",certificates:"Atestados",transactions:"Financeiro",inventory:"Estoque",tasks:"Tarefas"};
+      const labels={patients:"Pacientes",appointments:"Agenda",queue:"Fila",emergencies:"Emergências",referrals:"Encaminhamentos",records:"Prontuários",prescriptions:"Prescrições",exams:"Exames",vaccines:"Vacinas",certificates:"Atestados",transactions:"Financeiro",inventory:"Estoque",tasks:"Tarefas"};
       const totals=Object.entries(state).map(([collection,items])=>`${labels[collection]||collection}: ${items.length}`).join(" · ");
       const phrase="APAGAR TUDO";
       openModal("Apagar todos os dados da clínica",`<div class="banner"><strong>Ação irreversível.</strong> Isso apagará todos os pacientes, atendimentos, emergências, encaminhamentos, prontuários, exames, vacinas, prescrições, atestados, financeiro, estoque e tarefas desta conta. Não apaga a conta Supabase nem as configurações de conexão.<p class="note">${esc(totals)}</p></div><form id="dataForm"><div class="field"><label>Digite ${phrase} para confirmar</label><input name="confirmation" required autocomplete="off" spellcheck="false"></div><div class="form-actions"><button type="button" class="btn" data-action="close-modal">Cancelar</button><button class="btn btn-danger" type="submit" disabled>Apagar todos os dados</button></div></form>`);
@@ -571,9 +592,11 @@
       if (error) throw error;
       if (row) {
         state = normalizeState(row.data);
+        lastClinicUpdateAt=new Date(row.updated_at).getTime()||0;
         localImportAvailable = false;
       } else {
         state = emptyState();
+        lastClinicUpdateAt=0;
         try { localImportAvailable = Boolean(localStorage.getItem(STORAGE_KEY)); }
         catch (error) { console.error("Não foi possível verificar os dados locais antigos:", error); localImportAvailable = false; }
       }
@@ -581,7 +604,37 @@
       document.getElementById("loginError").textContent = "";
       document.getElementById("loginScreen").hidden = true;
       document.getElementById("app").hidden = false;
+      subscribeClinicUpdates(user);
       render();
+    }
+    function subscribeClinicUpdates(user) {
+      if(clinicRealtimeChannel)supabaseClient.removeChannel(clinicRealtimeChannel);
+      queueRealtimeStatus="connecting";
+      const channel=supabaseClient.channel(`clinic-data-${user.id}`);
+      clinicRealtimeChannel=channel;
+      channel.on("postgres_changes",{event:"*",schema:"public",table:"clinic_data",filter:`user_id=eq.${user.id}`},payload=>{
+          if(clinicRealtimeChannel!==channel||currentUser?.id!==user.id||!payload.new?.data)return;
+          const updatedAt=new Date(payload.new.updated_at).getTime()||0;
+          if(updatedAt&&updatedAt<lastClinicUpdateAt)return;
+          try {
+            state=normalizeState(payload.new.data);
+            lastClinicUpdateAt=Math.max(lastClinicUpdateAt,updatedAt);
+            render();
+          } catch(error) {
+            console.error("Não foi possível atualizar os dados recebidos em tempo real:",error);
+            toast("Uma atualização em tempo real tinha formato inválido. Recarregue o painel.");
+          }
+        }).subscribe(status=>{
+          if(clinicRealtimeChannel!==channel||currentUser?.id!==user.id)return;
+          if(status==="SUBSCRIBED") {
+            queueRealtimeStatus="connected";
+            if(currentPage==="queue")render();
+          } else if(["CHANNEL_ERROR","TIMED_OUT","CLOSED"].includes(status)) {
+            queueRealtimeStatus="error";
+            console.error(`Canal de atualizações em tempo real do Supabase: ${status}`);
+            if(currentPage==="queue")render();
+          }
+        });
     }
     async function importLocalData() {
       let localData;
@@ -635,10 +688,12 @@
       render();
     }
     function render() {
-      const views = { dashboard: dashboardView, emergency: emergencyView, referrals: referralsView, agenda: agendaView, patients: patientsView, records: recordsView, prescriptions: prescriptionsView, exams: examsView, vaccines: vaccinesView, certificates: certificatesView, finance: financeView, inventory: inventoryView, tasks: tasksView };
+      const views = { dashboard: dashboardView, queue: queueView, emergency: emergencyView, referrals: referralsView, agenda: agendaView, patients: patientsView, records: recordsView, prescriptions: prescriptionsView, exams: examsView, vaccines: vaccinesView, certificates: certificatesView, finance: financeView, inventory: inventoryView, tasks: tasksView };
       content.innerHTML = (views[currentPage] || dashboardView)();
       bindPageEvents();
+      updateQueueWaitTimers();
     }
+    setInterval(updateQueueWaitTimers,1000);
     function heading(title, subtitle, button = "") { return `<div class="page-heading"><div><h1>${title}</h1><p class="subtitle">${subtitle}</p></div>${button}</div>`; }
     function cardMetric(label, value, icon, note) { return `<article class="card metric"><div class="metric-top">${label}<span class="metric-icon">${icon}</span></div><div class="metric-value">${value}</div><div class="metric-note">${note}</div></article>`; }
     function dashboardView() {
@@ -668,7 +723,8 @@
       const upcomingAppointments=[...todayAppointments].sort((a,b)=>a.time.localeCompare(b.time)).slice(0,4);
       const appointmentRows=upcomingAppointments.length?upcomingAppointments.map(item=>`<div class="appointment"><span class="time">${esc(item.time||"—")}</span><div><div class="person">${esc(item.patient)}</div><div class="detail">${esc(item.type||"Consulta")}</div></div><span class="status ${["Aguardando","Aguardando atendimento"].includes(item.status)?"pending":""}">${esc(item.status||"Agendado")}</span></div>`).join(""):`<div class="empty">Nenhum atendimento agendado para hoje.</div>`;
       const activeEmergencies=state.emergencies.filter(item=>item.status!=="Concluído").length;
-      return `${heading("Bem-vindo à VittaCare", "Tecnologia e cuidado em cada atendimento.", `<button class="btn" data-goto="emergency">✚ Emergência (${activeEmergencies})</button><button class="btn btn-primary" data-action="new-appointment">＋ Agendar consulta</button>`)}
+      const waitingQueue=state.queue.filter(item=>item.status==="Aguardando").length;
+      return `${heading("Bem-vindo à VittaCare", "Tecnologia e cuidado em cada atendimento.", `<button class="btn" data-goto="queue">☷ Fila (${waitingQueue})</button><button class="btn" data-goto="emergency">✚ Emergência (${activeEmergencies})</button><button class="btn btn-primary" data-action="new-appointment">＋ Agendar consulta</button>`)}
         ${migrationBanner}
         <div class="cards">${cardMetric("Consultas hoje",todayAppointments.length,"▣",`${scheduledAppointments} ainda na agenda`)}${cardMetric("Pacientes cadastrados",state.patients.length,"♙","Na base da clínica")}${cardMetric("Exames pendentes",pendingExams,"⌕",`${availableExams} resultado(s) disponível(is)`)}${cardMetric("Estoque baixo",dueStock,"▤",dueStock?"Itens precisam de atenção":"Tudo dentro do mínimo")}</div>
         <div class="dashboard-grid">
@@ -682,6 +738,95 @@
             <div class="quick-grid"><button class="quick" data-action="new-patient"><span>♙</span><strong>Novo paciente</strong></button><button class="quick" data-action="new-record"><span>▤</span><strong>Nova nota clínica</strong></button></div>
           </div>
         </div>`;
+    }
+    const queuePriorities=["Urgência (protocolo da clínica)","Preferencial (protocolo da clínica)","Rotina"];
+    const queuePriorityRank={"Urgência (protocolo da clínica)":0,"Preferencial (protocolo da clínica)":1,"Rotina":2};
+    function queueWaitLabel(item,now=Date.now()) {
+      const arrival=new Date(item.arrivalAt).getTime();
+      if(Number.isNaN(arrival))return "Tempo de espera indisponível";
+      const stoppedAt=item.calledAt?new Date(item.calledAt).getTime():now;
+      const elapsed=Math.max(0,stoppedAt-arrival);
+      const totalMinutes=Math.floor(elapsed/60000);
+      const duration=totalMinutes<60?`${totalMinutes} min`:`${Math.floor(totalMinutes/60)} h ${String(totalMinutes%60).padStart(2,"0")} min`;
+      return item.status==="Aguardando"?`Espera atual: ${duration}`:`Espera até chamar: ${duration}`;
+    }
+    function updateQueueWaitTimers() {
+      const now=Date.now();
+      document.querySelectorAll("[data-queue-arrival]").forEach(element=>{
+        const item={arrivalAt:element.dataset.queueArrival,calledAt:element.dataset.queueCalled||"",status:element.dataset.queueStatus||"Aguardando"};
+        element.textContent=queueWaitLabel(item,now);
+      });
+    }
+    function queueTicket(item) {
+      const status=item.status||"Aguardando";
+      const actions=status==="Aguardando"
+        ? `<button class="btn btn-sm btn-danger" data-action="delete-item" data-collection="queue" data-id="${item.id}">Remover</button>`
+        : status==="Chamado"
+          ? `<button class="btn btn-sm btn-primary" data-action="start-queue-service" data-id="${item.id}">Iniciar atendimento</button><button class="btn btn-sm btn-danger" data-action="delete-item" data-collection="queue" data-id="${item.id}">Remover</button>`
+          : `<button class="btn btn-sm btn-primary" data-action="complete-queue-service" data-id="${item.id}">Concluir</button><button class="btn btn-sm btn-danger" data-action="delete-item" data-collection="queue" data-id="${item.id}">Remover</button>`;
+      const waitDetails=status==="Aguardando"
+        ? `Chegada: ${emergencyDateTime(item.arrivalAt)}`
+        : `Chegada: ${emergencyDateTime(item.arrivalAt)} · Chamado: ${emergencyDateTime(item.calledAt)}`;
+      const serviceDetails=item.startedAt?` · Em atendimento desde ${emergencyDateTime(item.startedAt)}`:"";
+      return `<article class="queue-ticket"><div class="queue-ticket-head"><div class="queue-patient">${esc(item.patient)}</div><span class="queue-priority ${queuePriorityRank[item.priority]===0?"urgent":queuePriorityRank[item.priority]===1?"preferred":""}">${esc(item.priority||"Rotina")}</span></div><div class="detail">${esc(item.reason||"Motivo não informado")}</div><div class="queue-wait" data-queue-arrival="${esc(item.arrivalAt)}" data-queue-called="${esc(item.calledAt||"")}" data-queue-status="${esc(status)}">${esc(queueWaitLabel(item))}</div><div class="detail">${esc(waitDetails)}${esc(serviceDetails)}</div><div class="queue-actions">${actions}</div></article>`;
+    }
+    function queueView() {
+      const active=state.queue.filter(item=>["Aguardando","Chamado","Em atendimento"].includes(item.status||"Aguardando"));
+      const compareQueueEntries=(a,b)=>{
+        const aRank=queuePriorityRank[a.priority]??queuePriorityRank.Rotina;
+        const bRank=queuePriorityRank[b.priority]??queuePriorityRank.Rotina;
+        return aRank-bRank||String(a.arrivalAt).localeCompare(String(b.arrivalAt));
+      };
+      const waiting=active.filter(item=>(item.status||"Aguardando")==="Aguardando").sort(compareQueueEntries);
+      const called=active.filter(item=>item.status==="Chamado").sort((a,b)=>String(a.calledAt).localeCompare(String(b.calledAt)));
+      const inService=active.filter(item=>item.status==="Em atendimento").sort((a,b)=>String(a.startedAt).localeCompare(String(b.startedAt)));
+      const history=[...state.queue].filter(item=>["Concluído","Cancelado"].includes(item.status)).sort((a,b)=>String(b.completedAt||b.arrivalAt).localeCompare(String(a.completedAt||a.arrivalAt))).slice(0,30);
+      const historyRows=history.map(item=>`<tr><td>${esc(emergencyDateTime(item.arrivalAt))}</td><td>${esc(item.patient)}</td><td>${esc(item.priority||"Rotina")}</td><td>${esc(item.status)}</td><td>${esc(item.completedAt?emergencyDateTime(item.completedAt):"—")}</td><td><button class="btn btn-sm btn-danger" data-action="delete-item" data-collection="queue" data-id="${item.id}">Excluir</button></td></tr>`).join("");
+      const realtimeMessage=queueRealtimeStatus==="connected"
+        ? "Fila conectada: mudanças de status aparecem ao vivo nesta conta."
+        : queueRealtimeStatus==="error"
+          ? "Atualização ao vivo indisponível. Habilite Realtime para clinic_data usando supabase-schema.sql; o tempo de espera local continua atualizando."
+          : "Conectando atualizações ao vivo da fila…";
+      return `${heading("Fila de atendimento","Acompanhe chegadas, chamadas e atendimentos em curso.",`<button class="btn" data-action="add-queue-patient">＋ Registrar chegada</button><button class="btn btn-primary" data-action="call-next-patient" ${waiting.length?"":"disabled"}>Chamar próximo paciente</button>`)}
+        <div class="banner"><strong>Prioridade manual:</strong> a equipe deve definir Urgência, Preferencial ou Rotina conforme o protocolo da clínica. A fila não classifica pacientes automaticamente nem substitui triagem ou avaliação profissional. <span role="status" aria-live="polite">${esc(realtimeMessage)}</span></div>
+        <div class="queue-board"><section class="queue-column"><div class="panel"><div class="panel-head"><div><h2>Aguardando</h2><span class="detail">${waiting.length} paciente(s)</span></div></div>${waiting.map(queueTicket).join("")||`<div class="empty">Ninguém aguardando.</div>`}</div></section>
+        <section class="queue-column"><div class="panel"><div class="panel-head"><div><h2>Chamados</h2><span class="detail">${called.length} paciente(s)</span></div></div>${called.map(queueTicket).join("")||`<div class="empty">Nenhum paciente chamado.</div>`}</div></section>
+        <section class="queue-column"><div class="panel"><div class="panel-head"><div><h2>Em atendimento</h2><span class="detail">${inService.length} paciente(s)</span></div></div>${inService.map(queueTicket).join("")||`<div class="empty">Nenhum atendimento em curso.</div>`}</div></section></div>
+        <div class="panel"><div class="panel-head"><div><h2>Histórico da fila</h2><span class="detail">Últimos ${history.length} atendimentos concluídos ou cancelados</span></div></div><div class="table-wrap"><table><thead><tr><th>Chegada</th><th>Paciente</th><th>Prioridade</th><th>Status</th><th>Conclusão</th><th>Ação</th></tr></thead><tbody>${historyRows||`<tr><td colspan="6" class="empty">O histórico aparecerá aqui após concluir atendimentos.</td></tr>`}</tbody></table></div></div>`;
+    }
+    function addQueuePatient() {
+      openModal("Registrar chegada na fila",formShell(`<div class="field full"><label>Nome do paciente *</label><input name="patient" required maxlength="120" placeholder="Nome completo"></div><div class="field"><label>Prioridade definida pela equipe *</label><select name="priority" required>${queuePriorities.map((priority,index)=>`<option value="${esc(priority)}" ${index===2?"selected":""}>${esc(priority)}</option>`).join("")}</select></div><div class="field"><label>Motivo / tipo de atendimento</label><input name="reason" maxlength="240" placeholder="Ex.: consulta agendada, retorno"></div><div class="field full"><p class="note">A chegada será registrada com data e horário atuais. Defina a prioridade conforme o protocolo da unidade.</p></div>`));
+      document.getElementById("dataForm").onsubmit=event=>{
+        event.preventDefault();
+        const data=Object.fromEntries(new FormData(event.currentTarget));
+        const arrivalAt=new Date().toISOString();
+        state.queue.push({id:Date.now(),patient:data.patient.trim(),priority:data.priority,reason:data.reason.trim(),status:"Aguardando",arrivalAt});
+        saveState();closeModal();render();toast("Paciente adicionado à fila.");
+      };
+    }
+    async function callNextPatient() {
+      const waiting=state.queue.filter(item=>(item.status||"Aguardando")==="Aguardando").sort((a,b)=>{
+        const aRank=queuePriorityRank[a.priority]??queuePriorityRank.Rotina;
+        const bRank=queuePriorityRank[b.priority]??queuePriorityRank.Rotina;
+        return aRank-bRank||String(a.arrivalAt).localeCompare(String(b.arrivalAt));
+      });
+      const next=waiting[0];
+      if(!next){toast("Não há pacientes aguardando.");return;}
+      await saveStateMutation(()=>{
+        next.status="Chamado";
+        next.calledAt=new Date().toISOString();
+      },"Próximo paciente chamado.");
+    }
+    async function updateQueuePatient(id,nextStatus) {
+      const item=state.queue.find(entry=>String(entry.id)===String(id));
+      if(!item)return;
+      const allowedTransitions={Chamado:["Em atendimento"],"Em atendimento":["Concluído"]};
+      if(!allowedTransitions[item.status]?.includes(nextStatus))return;
+      await saveStateMutation(()=>{
+        item.status=nextStatus;
+        if(nextStatus==="Em atendimento")item.startedAt=new Date().toISOString();
+        if(nextStatus==="Concluído")item.completedAt=new Date().toISOString();
+      },nextStatus==="Concluído"?"Atendimento concluído e adicionado ao histórico.":"Atendimento iniciado.");
     }
     const emergencyStages=["Recepção","Triagem","Avaliação médica","Encaminhamento","Concluído"];
     const emergencyPriorities=["Emergência","Muito urgente","Urgente","Pouco urgente","Não urgente"];
@@ -1002,6 +1147,10 @@
         const action=button.dataset.action;
         if(action==="delete-item")deleteCollectionItem(button.dataset.collection,button.dataset.id);
         if(action==="delete-patient")deletePatient(button.dataset.id);
+        if(action==="add-queue-patient")addQueuePatient();
+        if(action==="call-next-patient")callNextPatient();
+        if(action==="start-queue-service")updateQueuePatient(button.dataset.id,"Em atendimento");
+        if(action==="complete-queue-service")updateQueuePatient(button.dataset.id,"Concluído");
         if(action==="new-emergency")createEmergency();
         if(action==="new-referral")createReferral();
         if(action==="edit-referral")createReferral(state.referrals.find(item=>item.id===Number(button.dataset.id)));
