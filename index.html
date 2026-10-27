@@ -178,6 +178,7 @@
     .queue-ticket:first-of-type { border-top: 0; }
     .queue-ticket-head { display: flex; justify-content: space-between; align-items: flex-start; gap: 8px; }
     .queue-patient { font-weight: 700; }
+    .queue-protocol { display: inline-flex; width: fit-content; margin-top: 4px; padding: 2px 7px; border: 1px solid var(--line); border-radius: 6px; color: var(--muted-strong); font-size: 10px; font-weight: 750; letter-spacing: .5px; }
     .queue-priority { display: inline-flex; border-radius: 20px; padding: 3px 8px; background: var(--surface-soft); color: var(--muted-strong); font-size: 10px; font-weight: 750; white-space: nowrap; }
     .queue-priority.urgent { background: #ffe8e8; color: #b42318; }
     .queue-priority.preferred { background: #fff6e5; color: #a36b0b; }
@@ -768,7 +769,7 @@
         ? `Chegada: ${emergencyDateTime(item.arrivalAt)}`
         : `Chegada: ${emergencyDateTime(item.arrivalAt)} · Chamado: ${emergencyDateTime(item.calledAt)}`;
       const serviceDetails=item.startedAt?` · Em atendimento desde ${emergencyDateTime(item.startedAt)}`:"";
-      return `<article class="queue-ticket"><div class="queue-ticket-head"><div class="queue-patient">${esc(item.patient)}</div><span class="queue-priority ${queuePriorityRank[item.priority]===0?"urgent":queuePriorityRank[item.priority]===1?"preferred":""}">${esc(item.priority||"Rotina")}</span></div><div class="detail">${esc(item.reason||"Motivo não informado")}</div><div class="queue-wait" data-queue-arrival="${esc(item.arrivalAt)}" data-queue-called="${esc(item.calledAt||"")}" data-queue-status="${esc(status)}">${esc(queueWaitLabel(item))}</div><div class="detail">${esc(waitDetails)}${esc(serviceDetails)}</div><div class="queue-actions">${actions}</div></article>`;
+      return `<article class="queue-ticket"><div class="queue-ticket-head"><div><div class="queue-patient">${esc(item.patient)}</div><span class="queue-protocol">PROTOCOLO ${esc(item.protocol||"—")}</span></div><span class="queue-priority ${queuePriorityRank[item.priority]===0?"urgent":queuePriorityRank[item.priority]===1?"preferred":""}">${esc(item.priority||"Rotina")}</span></div><div class="detail">${esc(item.reason||"Motivo não informado")}</div><div class="detail">Sala: ${esc(item.room||"A definir")} · Doutor(a): ${esc(item.doctor||"A definir")}</div><div class="queue-wait" data-queue-arrival="${esc(item.arrivalAt)}" data-queue-called="${esc(item.calledAt||"")}" data-queue-status="${esc(status)}">${esc(queueWaitLabel(item))}</div><div class="detail">${esc(waitDetails)}${esc(serviceDetails)}</div><div class="queue-actions">${actions}</div></article>`;
     }
     function queueView() {
       const active=state.queue.filter(item=>["Aguardando","Chamado","Em atendimento"].includes(item.status||"Aguardando"));
@@ -781,28 +782,142 @@
       const called=active.filter(item=>item.status==="Chamado").sort((a,b)=>String(a.calledAt).localeCompare(String(b.calledAt)));
       const inService=active.filter(item=>item.status==="Em atendimento").sort((a,b)=>String(a.startedAt).localeCompare(String(b.startedAt)));
       const history=[...state.queue].filter(item=>["Concluído","Cancelado"].includes(item.status)).sort((a,b)=>String(b.completedAt||b.arrivalAt).localeCompare(String(a.completedAt||a.arrivalAt))).slice(0,30);
-      const historyRows=history.map(item=>`<tr><td>${esc(emergencyDateTime(item.arrivalAt))}</td><td>${esc(item.patient)}</td><td>${esc(item.priority||"Rotina")}</td><td>${esc(item.status)}</td><td>${esc(item.completedAt?emergencyDateTime(item.completedAt):"—")}</td><td><button class="btn btn-sm btn-danger" data-action="delete-item" data-collection="queue" data-id="${item.id}">Excluir</button></td></tr>`).join("");
+      const historyRows=history.map(item=>`<tr><td>${esc(item.protocol||"—")}</td><td>${esc(emergencyDateTime(item.arrivalAt))}</td><td>${esc(item.patient)}</td><td>${esc(item.room||"—")}</td><td>${esc(item.doctor||"—")}</td><td>${esc(item.priority||"Rotina")}</td><td>${esc(item.status)}</td><td>${esc(item.completedAt?emergencyDateTime(item.completedAt):"—")}</td><td><button class="btn btn-sm btn-danger" data-action="delete-item" data-collection="queue" data-id="${item.id}">Excluir</button></td></tr>`).join("");
       const realtimeMessage=queueRealtimeStatus==="connected"
         ? "Fila conectada: mudanças de status aparecem ao vivo nesta conta."
         : queueRealtimeStatus==="error"
           ? "Atualização ao vivo indisponível. Habilite Realtime para clinic_data usando supabase-schema.sql; o tempo de espera local continua atualizando."
           : "Conectando atualizações ao vivo da fila…";
       return `${heading("Fila de atendimento","Acompanhe chegadas, chamadas e atendimentos em curso.",`<button class="btn" data-action="add-queue-patient">＋ Registrar chegada</button><button class="btn btn-primary" data-action="call-next-patient" ${waiting.length?"":"disabled"}>Chamar próximo paciente</button>`)}
-        <div class="banner"><strong>Prioridade manual:</strong> a equipe deve definir Urgência, Preferencial ou Rotina conforme o protocolo da clínica. A fila não classifica pacientes automaticamente nem substitui triagem ou avaliação profissional. <span role="status" aria-live="polite">${esc(realtimeMessage)}</span></div>
+        <div class="banner"><strong>Prioridade manual:</strong> a equipe deve definir Urgência, Preferencial ou Rotina conforme o protocolo da clínica. A fila não classifica pacientes automaticamente nem substitui triagem ou avaliação profissional. O anúncio de voz é audível para pessoas próximas; confirme que pode chamar o nome do paciente. <span role="status" aria-live="polite">${esc(realtimeMessage)}</span></div>
         <div class="queue-board"><section class="queue-column"><div class="panel"><div class="panel-head"><div><h2>Aguardando</h2><span class="detail">${waiting.length} paciente(s)</span></div></div>${waiting.map(queueTicket).join("")||`<div class="empty">Ninguém aguardando.</div>`}</div></section>
         <section class="queue-column"><div class="panel"><div class="panel-head"><div><h2>Chamados</h2><span class="detail">${called.length} paciente(s)</span></div></div>${called.map(queueTicket).join("")||`<div class="empty">Nenhum paciente chamado.</div>`}</div></section>
         <section class="queue-column"><div class="panel"><div class="panel-head"><div><h2>Em atendimento</h2><span class="detail">${inService.length} paciente(s)</span></div></div>${inService.map(queueTicket).join("")||`<div class="empty">Nenhum atendimento em curso.</div>`}</div></section></div>
-        <div class="panel"><div class="panel-head"><div><h2>Histórico da fila</h2><span class="detail">Últimos ${history.length} atendimentos concluídos ou cancelados</span></div></div><div class="table-wrap"><table><thead><tr><th>Chegada</th><th>Paciente</th><th>Prioridade</th><th>Status</th><th>Conclusão</th><th>Ação</th></tr></thead><tbody>${historyRows||`<tr><td colspan="6" class="empty">O histórico aparecerá aqui após concluir atendimentos.</td></tr>`}</tbody></table></div></div>`;
+        <div class="panel"><div class="panel-head"><div><h2>Histórico da fila</h2><span class="detail">Últimos ${history.length} atendimentos concluídos ou cancelados</span></div></div><div class="table-wrap"><table><thead><tr><th>Protocolo</th><th>Chegada</th><th>Paciente</th><th>Sala</th><th>Doutor(a)</th><th>Prioridade</th><th>Status</th><th>Conclusão</th><th>Ação</th></tr></thead><tbody>${historyRows||`<tr><td colspan="9" class="empty">O histórico aparecerá aqui após concluir atendimentos.</td></tr>`}</tbody></table></div></div>`;
+    }
+    function generateQueueProtocol() {
+      const usedProtocols=new Set(state.queue.map(item=>String(item.protocol||"")));
+      for(let attempt=0;attempt<100;attempt++) {
+        let value;
+        if(window.crypto?.getRandomValues) {
+          const sample=new Uint32Array(1);
+          const range=90000;
+          const limit=Math.floor(0x100000000/range)*range;
+          do { window.crypto.getRandomValues(sample); } while(sample[0]>=limit);
+          value=String(10000+(sample[0]%range));
+        } else {
+          value=String(Math.floor(10000+Math.random()*90000));
+        }
+        if(!usedProtocols.has(value))return value;
+      }
+      throw new Error("Não foi possível gerar um protocolo único. Tente registrar a chegada novamente.");
     }
     function addQueuePatient() {
-      openModal("Registrar chegada na fila",formShell(`<div class="field full"><label>Nome do paciente *</label><input name="patient" required maxlength="120" placeholder="Nome completo"></div><div class="field"><label>Prioridade definida pela equipe *</label><select name="priority" required>${queuePriorities.map((priority,index)=>`<option value="${esc(priority)}" ${index===2?"selected":""}>${esc(priority)}</option>`).join("")}</select></div><div class="field"><label>Motivo / tipo de atendimento</label><input name="reason" maxlength="240" placeholder="Ex.: consulta agendada, retorno"></div><div class="field full"><p class="note">A chegada será registrada com data e horário atuais. Defina a prioridade conforme o protocolo da unidade.</p></div>`));
+      openModal("Registrar chegada na fila",formShell(`<div class="field full"><label>Nome do paciente *</label><input name="patient" required maxlength="120" placeholder="Nome completo"></div><div class="field"><label>Número da sala *</label><input name="room" required maxlength="40" placeholder="Ex.: 2"></div><div class="field"><label>Nome do(a) doutor(a) *</label><input name="doctor" required maxlength="120" placeholder="Ex.: Dr. João / Dra. Maria"></div><div class="field"><label>Prioridade definida pela equipe *</label><select name="priority" required>${queuePriorities.map((priority,index)=>`<option value="${esc(priority)}" ${index===2?"selected":""}>${esc(priority)}</option>`).join("")}</select></div><div class="field"><label>Motivo / tipo de atendimento</label><input name="reason" maxlength="240" placeholder="Ex.: consulta agendada, retorno"></div><div class="field full"><p class="note">A chegada será registrada com data e horário atuais. Defina a prioridade conforme o protocolo da unidade.</p></div>`));
       document.getElementById("dataForm").onsubmit=event=>{
         event.preventDefault();
         const data=Object.fromEntries(new FormData(event.currentTarget));
         const arrivalAt=new Date().toISOString();
-        state.queue.push({id:Date.now(),patient:data.patient.trim(),priority:data.priority,reason:data.reason.trim(),status:"Aguardando",arrivalAt});
-        saveState();closeModal();render();toast("Paciente adicionado à fila.");
+        let protocol;
+        try { protocol=generateQueueProtocol(); }
+        catch(error) { toast(error.message); return; }
+        state.queue.push({id:Date.now(),protocol,patient:data.patient.trim(),room:data.room.trim(),doctor:data.doctor.trim(),priority:data.priority,reason:data.reason.trim(),status:"Aguardando",arrivalAt});
+        saveState();closeModal();render();toast(`Paciente adicionado à fila. Protocolo: ${protocol}.`);
       };
+    }
+    function closeQueueAudio(audioContext) {
+      if(audioContext&&audioContext.state!=="closed") {
+        audioContext.close().catch(error=>console.error("Não foi possível encerrar o áudio da chamada:",error));
+      }
+    }
+    function announceQueuePatient(item,audioContext) {
+      const audioReady=audioContext?.state==="running";
+      if(audioReady) {
+        const start=audioContext.currentTime+0.05;
+        [880,660,880].forEach((frequency,index)=>{
+          const oscillator=audioContext.createOscillator();
+          const gain=audioContext.createGain();
+          const noteStart=start+index*0.22;
+          oscillator.type="sine";
+          oscillator.frequency.value=frequency;
+          gain.gain.setValueAtTime(0.0001,noteStart);
+          gain.gain.exponentialRampToValueAtTime(0.12,noteStart+0.025);
+          gain.gain.exponentialRampToValueAtTime(0.0001,noteStart+0.16);
+          oscillator.connect(gain);
+          gain.connect(audioContext.destination);
+          oscillator.start(noteStart);
+          oscillator.stop(noteStart+0.17);
+        });
+      }
+      if(!("speechSynthesis" in window)||!("SpeechSynthesisUtterance" in window)) {
+        toast(audioReady?"Paciente chamado. A voz não está disponível neste navegador.":"Paciente chamado, mas o navegador não permitiu reproduzir o áudio.");
+        if(audioContext)setTimeout(()=>closeQueueAudio(audioContext),1000);
+        return;
+      }
+      const utterance=new SpeechSynthesisUtterance(`Pin, pin, pin. Paciente ${item.patient}, protocolo ${item.protocol}. Por favor, dirija-se à sala ${item.room}, para atendimento com ${item.doctor}.`);
+      utterance.lang="pt-BR";
+      utterance.rate=0.92;
+      utterance.onstart=()=>{if(currentPage==="queue")toast(`Chamando protocolo ${item.protocol}.`);};
+      utterance.onerror=event=>{
+        console.error("Não foi possível reproduzir o anúncio da fila:",event.error);
+        toast(`Paciente chamado, mas o anúncio de voz falhou: ${event.error||"erro de áudio"}.`);
+        closeQueueAudio(audioContext);
+      };
+      utterance.onend=()=>{
+        closeQueueAudio(audioContext);
+      };
+      setTimeout(()=>{
+        try { window.speechSynthesis.speak(utterance); }
+        catch(error) {
+          console.error("Não foi possível iniciar o anúncio da fila:",error);
+          toast("Paciente chamado, mas o navegador não conseguiu iniciar o anúncio de voz.");
+          closeQueueAudio(audioContext);
+        }
+      },audioReady?750:0);
+    }
+    async function callQueuePatient(item,details={}) {
+      let audioContext=null;
+      let audioResume=Promise.resolve();
+      try {
+        const AudioContextClass=window.AudioContext||window.webkitAudioContext;
+        if(AudioContextClass) {
+          audioContext=new AudioContextClass();
+          if(audioContext.state==="suspended")audioResume=audioContext.resume();
+        }
+      } catch(error) {
+        console.error("Não foi possível iniciar o sinal sonoro da fila:",error);
+      }
+      let protocol=item.protocol;
+      try {
+        if(!protocol)protocol=generateQueueProtocol();
+      } catch(error) {
+        closeQueueAudio(audioContext);
+        toast(error.message);
+        return;
+      }
+      const room=details.room??item.room;
+      const doctor=details.doctor??item.doctor;
+      if(!room||!doctor) {
+        closeQueueAudio(audioContext);
+        toast("Informe a sala e o nome do(a) doutor(a) antes de chamar.");
+        return false;
+      }
+      const calledAt=new Date().toISOString();
+      const saved=await saveStateMutation(()=>{
+        item.protocol=protocol;
+        item.room=room;
+        item.doctor=doctor;
+        item.status="Chamado";
+        item.calledAt=calledAt;
+      },"Próximo paciente chamado.");
+      if(!saved) {
+        closeQueueAudio(audioContext);
+        return false;
+      }
+      try { await audioResume; }
+      catch(error) { console.error("Não foi possível ativar o áudio da chamada:",error); }
+      announceQueuePatient(item,audioContext);
+      return true;
     }
     async function callNextPatient() {
       const waiting=state.queue.filter(item=>(item.status||"Aguardando")==="Aguardando").sort((a,b)=>{
@@ -812,10 +927,17 @@
       });
       const next=waiting[0];
       if(!next){toast("Não há pacientes aguardando.");return;}
-      await saveStateMutation(()=>{
-        next.status="Chamado";
-        next.calledAt=new Date().toISOString();
-      },"Próximo paciente chamado.");
+      if(!next.room||!next.doctor) {
+        openModal("Completar dados da chamada",formShell(`<div class="field"><label>Número da sala *</label><input name="room" required maxlength="40" value="${esc(next.room||"")}" placeholder="Ex.: 2"></div><div class="field"><label>Nome do(a) doutor(a) *</label><input name="doctor" required maxlength="120" value="${esc(next.doctor||"")}" placeholder="Ex.: Dr. João / Dra. Maria"></div><div class="field full"><p class="note">Paciente: <strong>${esc(next.patient)}</strong>${next.protocol?` · Protocolo ${esc(next.protocol)}`:" · O protocolo será gerado agora."}</p></div>`));
+        document.getElementById("dataForm").onsubmit=async event=>{
+          event.preventDefault();
+          const data=Object.fromEntries(new FormData(event.currentTarget));
+          closeModal();
+          await callQueuePatient(next,{room:data.room.trim(),doctor:data.doctor.trim()});
+        };
+        return;
+      }
+      await callQueuePatient(next);
     }
     async function updateQueuePatient(id,nextStatus) {
       const item=state.queue.find(entry=>String(entry.id)===String(id));
