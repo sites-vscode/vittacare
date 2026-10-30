@@ -854,7 +854,7 @@
         if(audioContext)setTimeout(()=>closeQueueAudio(audioContext),1000);
         return;
       }
-      const utterance=new SpeechSynthesisUtterance(`Pin, pin, pin. Paciente ${item.patient}, protocolo ${item.protocol}. Por favor, dirija-se à sala ${item.room}, para atendimento com ${item.doctor}.`);
+      const utterance=new SpeechSynthesisUtterance(`Paciente ${item.patient}, protocolo ${item.protocol}. Por favor, dirija-se à sala ${item.room}, para atendimento com ${item.doctor}.`);
       utterance.lang="pt-BR";
       utterance.rate=0.92;
       utterance.onstart=()=>{if(currentPage==="queue")toast(`Chamando protocolo ${item.protocol}.`);};
